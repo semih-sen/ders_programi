@@ -1,0 +1,46 @@
+name: Deploy to Cinnasium Server
+
+# Sadece 'main' branch'ine (ana dala) push yapıldığında tetiklensin
+on:
+  push:
+    branches:
+      - main  # veya 'production' hangisini kullanıyorsanız
+
+jobs:
+  deploy:
+    # Bu işin nerede çalışacağını belirtir. 
+    # 'self-hosted' dediğimizde, sizin sunucunuzdaki runner'a gider.
+    runs-on: self-hosted
+
+    # Projenin sunucuda bulunduğu dizini buraya yazın
+    # Bu, 'ghrunner' kullanıcısının ev dizinindeki proje yolu olmalı
+    defaults:
+      run:
+        working-directory: /home/ghrunner/ders_programi 
+
+    steps:
+      - name: 1. Kodu Çek (Checkout)
+        # GitHub'dan en güncel kodu runner'ın çalışma dizinine indirir
+        uses: actions/checkout@v4
+
+      - name: 2. Node.js Sürümünü Ayarla
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # Sunucunuzdaki sürümle aynı olsun
+
+      - name: 3. Bağımlılıkları Yükle (Değişiklik varsa)
+        run: npm install
+
+      - name: 4. Veritabanı Değişikliklerini Uygula
+        # Eğer schema.prisma'da değişiklik yaptıysanız bu şart.
+        run: npx prisma migrate deploy
+
+      - name: 5. Prisma Client'ı Yeniden Oluştur
+        run: npx prisma generate
+
+      - name: 6. Projeyi Yeniden Derle (Build)
+        run: npm run build
+
+      - name: 7. PM2 ile Uygulamayı Yeniden Başlat
+        # pm2, çalışan 'cinnasium' uygulamasını sıfır kesintiyle günceller
+        run: pm2 reload cinnasium
