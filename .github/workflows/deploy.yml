@@ -16,7 +16,7 @@ jobs:
     # Bu, 'ghrunner' kullanıcısının ev dizinindeki proje yolu olmalı
     defaults:
       run:
-        working-directory: /home/ghrunner/ders_programi 
+        working-directory: /home/ghrunner/ders_programi/ders_programi
 
     steps:
       - name: 1. Kodu Çek (Checkout)
