@@ -33,7 +33,7 @@ jobs:
 
       - name: 4. Veritabanı Değişikliklerini Uygula
         # Eğer schema.prisma'da değişiklik yaptıysanız bu şart.
-        run: npx prisma migrate deploy
+        run: npx prisma db push
 
       - name: 5. Prisma Client'ı Yeniden Oluştur
         run: npx prisma generate
