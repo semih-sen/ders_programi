@@ -1,110 +1,118 @@
 import crypto from 'crypto';
 
 /**
- * Encryption utilities for securing sensitive tokens in the database
- * Uses AES-256-GCM encryption which provides both confidentiality and authenticity
+ * AES-256-GCM encryption utilities using a 32-byte key from ENCRYPTION_KEY.
+ * Format: iv:ciphertext:authTag (hex:hex:hex)
+ * Backward-compatibility: also accepts iv:authTag:ciphertext for legacy data.
  */
 
 const ALGORITHM = 'aes-256-gcm';
-const IV_LENGTH = 16;
-const SALT_LENGTH = 64;
-const TAG_LENGTH = 16;
-const KEY_LENGTH = 32;
-const ITERATIONS = 100000;
+const IV_LENGTH = 16; // 128-bit
+const TAG_LENGTH = 16; // 128-bit
+const KEY_LENGTH = 32; // 256-bit
 
-/**
- * Derives an encryption key from the NEXTAUTH_SECRET
- */
-function getEncryptionKey(): Buffer {
-  const secret = process.env.NEXTAUTH_SECRET;
-  
-  if (!secret) {
-    throw new Error('NEXTAUTH_SECRET is not defined in environment variables');
+function getKeyFromEnv(): Buffer {
+  const raw = process.env.ENCRYPTION_KEY;
+  if (!raw) {
+    throw new Error('ENCRYPTION_KEY is not defined in environment variables');
   }
 
-  // Derive a proper encryption key from the secret
-  return crypto.pbkdf2Sync(secret, 'salt', ITERATIONS, KEY_LENGTH, 'sha512');
+  // Try base64
+  try {
+    const b64 = Buffer.from(raw, 'base64');
+    if (b64.length === KEY_LENGTH) return b64;
+  } catch {}
+
+  // Try hex
+  try {
+    const hex = Buffer.from(raw, 'hex');
+    if (hex.length === KEY_LENGTH) return hex;
+  } catch {}
+
+  // Fallback: utf8 padded/truncated to 32 bytes (not ideal, but robust)
+  const buf = Buffer.alloc(KEY_LENGTH);
+  Buffer.from(raw, 'utf8').copy(buf);
+  return buf;
 }
 
-/**
- * Encrypts a refresh token before storing it in the database
- * @param text - The refresh token to encrypt
- * @returns Encrypted string in format: iv:authTag:encrypted
- */
-export function encryptToken(text: string): string {
-  if (!text) return text;
-
+export function encrypt(plain: string): string {
+  if (!plain) return plain;
   try {
-    const key = getEncryptionKey();
+    const key = getKeyFromEnv();
     const iv = crypto.randomBytes(IV_LENGTH);
-    
     const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
-    
-    let encrypted = cipher.update(text, 'utf8', 'hex');
-    encrypted += cipher.final('hex');
-    
-    const authTag = cipher.getAuthTag();
-    
-    // Return format: iv:authTag:encrypted
-    return `${iv.toString('hex')}:${authTag.toString('hex')}:${encrypted}`;
-  } catch (error) {
-    console.error('Encryption error:', error);
-    throw new Error('Failed to encrypt token');
+    const ciphertext = Buffer.concat([cipher.update(plain, 'utf8'), cipher.final()]);
+    const tag = cipher.getAuthTag();
+    // Return iv:ciphertext:authTag (hex)
+    return `${iv.toString('hex')}:${ciphertext.toString('hex')}:${tag.toString('hex')}`;
+  } catch (err) {
+    console.error('Encryption error:', err);
+    throw new Error('Failed to encrypt value');
   }
 }
 
-/**
- * Decrypts a refresh token when reading from the database
- * @param encryptedText - The encrypted token in format: iv:authTag:encrypted
- * @returns Decrypted refresh token
- */
-export function decryptToken(encryptedText: string): string {
-  if (!encryptedText) return encryptedText;
-
+export function decrypt(token: string): string {
+  if (!token) return token;
   try {
-    const parts = encryptedText.split(':');
-    
-    // If it doesn't have the expected format, it might be unencrypted (legacy data)
+    const parts = token.split(':');
     if (parts.length !== 3) {
-      console.warn('Token is not in encrypted format, returning as-is');
-      return encryptedText;
+      // Not an encrypted value (legacy/plain)
+      return token;
     }
 
-    const [ivHex, authTagHex, encrypted] = parts;
-    
-    const key = getEncryptionKey();
-    const iv = Buffer.from(ivHex, 'hex');
-    const authTag = Buffer.from(authTagHex, 'hex');
-    
-    const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
-    decipher.setAuthTag(authTag);
-    
-    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
-    
-    return decrypted;
-  } catch (error) {
-    console.error('Decryption error:', error);
-    throw new Error('Failed to decrypt token');
+    const [p1, p2, p3] = parts;
+    const iv = Buffer.from(p1, 'hex');
+    // Determine which part is tag (16 bytes -> 32 hex chars)
+    const isLegacyOrder = p2.length === TAG_LENGTH * 2; // iv:authTag:ciphertext
+    const tagHex = isLegacyOrder ? p2 : p3;
+    const ctHex = isLegacyOrder ? p3 : p2;
+
+    const tryWithKey = (key: Buffer) => {
+      const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
+      decipher.setAuthTag(Buffer.from(tagHex, 'hex'));
+      const decrypted = Buffer.concat([
+        decipher.update(Buffer.from(ctHex, 'hex')),
+        decipher.final(),
+      ]);
+      return decrypted.toString('utf8');
+    };
+
+    // Prefer new key
+    try {
+      return tryWithKey(getKeyFromEnv());
+    } catch {}
+
+    // Fallback to legacy derivation from NEXTAUTH_SECRET (for older records)
+    const legacySecret = process.env.NEXTAUTH_SECRET;
+    if (legacySecret) {
+      const legacyKey = crypto.pbkdf2Sync(legacySecret, 'salt', 100000, KEY_LENGTH, 'sha512');
+      try {
+        return tryWithKey(legacyKey);
+      } catch {}
+    }
+
+    throw new Error('Failed to decrypt with available keys');
+  } catch (err) {
+    console.error('Decryption error:', err);
+    throw new Error('Failed to decrypt value');
   }
 }
 
-/**
- * Helper function to safely encrypt tokens in Account data
- */
+// Backwards-compatible helpers used elsewhere in the app
+export function encryptToken(text: string): string {
+  return encrypt(text);
+}
+
+export function decryptToken(encryptedText: string): string {
+  return decrypt(encryptedText);
+}
+
 export function encryptAccountTokens(account: any) {
-  if (account.refresh_token) {
-    account.refresh_token = encryptToken(account.refresh_token);
-  }
+  if (account.refresh_token) account.refresh_token = encrypt(account.refresh_token);
   return account;
 }
 
-/**
- * Helper function to safely decrypt tokens from Account data
- */
 export function decryptAccountTokens(account: any) {
-  if (account.refresh_token) {
-    account.refresh_token = decryptToken(account.refresh_token);
-  }
+  if (account.refresh_token) account.refresh_token = decrypt(account.refresh_token);
   return account;
 }

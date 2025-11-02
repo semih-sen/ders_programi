@@ -2,7 +2,7 @@ import { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
-import { encryptToken } from "@/lib/crypto";
+import { encrypt } from "@/lib/crypto";
 import type { Adapter } from "next-auth/adapters";
 
 export const authOptions: NextAuthOptions = {
@@ -113,40 +113,7 @@ export const authOptions: NextAuthOptions = {
      * This runs after the adapter's linkAccount but before the data is persisted
      */
     async signIn({ user, account, profile }) {
-      if (account) {
-        // Encrypt the refresh token before it gets saved to the database
-        if (account.refresh_token) {
-          try {
-            account.refresh_token = encryptToken(account.refresh_token);
-            console.log('✅ Refresh token encrypted successfully');
-          } catch (error) {
-            console.error('❌ Failed to encrypt refresh token:', error);
-            // Decide: should we allow sign-in to proceed or fail?
-            // For security, you might want to return false here
-            return false;
-          }
-        }
-
-        // Also encrypt access token if you want (optional but recommended)
-        if (account.access_token) {
-          try {
-            account.access_token = encryptToken(account.access_token);
-            console.log('✅ Access token encrypted successfully');
-          } catch (error) {
-            console.error('❌ Failed to encrypt access token:', error);
-          }
-        }
-
-        // Log the account data being saved (for debugging)
-        console.log('📝 Saving account with encrypted tokens:', {
-          provider: account.provider,
-          userId: user.id,
-          hasRefreshToken: !!account.refresh_token,
-          hasAccessToken: !!account.access_token,
-          expiresAt: account.expires_at,
-        });
-      }
-
+      // Allow sign in; encryption handled in events.linkAccount after adapter persistence
       return true;
     },
   },
@@ -162,6 +129,41 @@ export const authOptions: NextAuthOptions = {
         provider: account?.provider,
         isNewUser,
       });
+    },
+
+    /**
+     * Encrypt refresh_token after adapter saves the Account (clean approach)
+     */
+    async linkAccount({ user, account }) {
+      try {
+        if (!account) return;
+        // Find the adapter Account by its unique composite key
+        const dbAccount = await prisma.account.findUnique({
+          where: {
+            provider_providerAccountId: {
+              provider: account.provider,
+              providerAccountId: account.providerAccountId,
+            },
+          },
+          select: { id: true, refresh_token: true },
+        });
+
+        if (!dbAccount || !dbAccount.refresh_token) return;
+
+        // Skip if looks already encrypted (three colon-separated parts)
+        if (dbAccount.refresh_token.includes(':') && dbAccount.refresh_token.split(':').length === 3) {
+          return;
+        }
+
+        const encryptedToken = encrypt(dbAccount.refresh_token);
+        await prisma.account.update({
+          where: { id: dbAccount.id },
+          data: { refresh_token: encryptedToken },
+        });
+        console.log('✅ Refresh token encrypted via linkAccount event');
+      } catch (err) {
+        console.error('❌ linkAccount encryption error:', err);
+      }
     },
   },
 
