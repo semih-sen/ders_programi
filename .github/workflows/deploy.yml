@@ -21,7 +21,9 @@ jobs:
     steps:
       - name: 1. Kodu Çek (Checkout)
         # GitHub'dan en güncel kodu runner'ın çalışma dizinine indirir
-        uses: actions/checkout@v4
+        uses: actions/checkout@4
+        with:
+          path: /home/ghrunner/ders_programi/ders_programi
 
       - name: 2. Node.js Sürümünü Ayarla
         uses: actions/setup-node@v4
@@ -30,15 +32,19 @@ jobs:
 
       - name: 3. Bağımlılıkları Yükle (Değişiklik varsa)
         run: npm install
+        working-directory: /home/ghrunner/ders_programi/ders_programi
 
       - name: 4. Veritabanı Değişikliklerini Uygula
         # Eğer schema.prisma'da değişiklik yaptıysanız bu şart.
         run: npx prisma db push
+        working-directory: /home/ghrunner/ders_programi/ders_programi
 
       - name: 5. Prisma Client'ı Yeniden Oluştur
         run: npx prisma generate
+        working-directory: /home/ghrunner/ders_programi/ders_programi
 
       - name: 6. Projeyi Yeniden Derle (Build)
         run: pm2 restart cinnasium 
+        working-directory: /home/ghrunner/ders_programi/ders_programi
 
       
