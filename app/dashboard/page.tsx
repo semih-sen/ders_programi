@@ -2,6 +2,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { redirect } from 'next/navigation';
 import ActivationForm from './ActivationForm';
+import TestDriveForm from './TestDriveForm';
 
 export const metadata = {
   title: 'Dashboard - Cinnasium Takvimdâr',
@@ -100,7 +101,7 @@ export default async function DashboardPage() {
                 Uygulama Grubunuzu Seçin
               </label>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {['A', 'B', 'C', 'D', 'E', 'F'].map((group) => (
+                {['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'].map((group) => (
                   <button
                     key={group}
                     className="bg-slate-700/50 hover:bg-slate-700 border-2 border-slate-600 hover:border-blue-500 rounded-lg p-4 text-center transition-all duration-200 transform hover:scale-105"
@@ -162,6 +163,11 @@ export default async function DashboardPage() {
                     <p className="text-slate-400 text-sm">Haftalık program</p>
                   </div>
                 </button>
+              </div>
+              {/* Test Drive Button (n8n webhook) */}
+              <div className="mt-4">
+                <h4 className="text-sm font-semibold text-slate-300 mb-2">Test Sürüşü</h4>
+                <TestDriveForm />
               </div>
             </div>
           </div>

@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { revalidatePath } from 'next/cache';
+import { Buffer } from 'node:buffer';
 
 /**
  * Activate a user account with a license key
@@ -76,5 +77,52 @@ export async function activateAccount(
   } catch (error) {
     console.error('❌ Error activating account:', error);
     return { error: 'Hesap aktifleştirme sırasında bir hata oluştu. Lütfen tekrar deneyin.' };
+  }
+}
+
+// ---------------------------------------------
+// Test Drive: Trigger n8n Webhook (Server Action)
+// ---------------------------------------------
+export type WebhookState = {
+  success?: boolean;
+  message?: string;
+};
+
+export async function triggerTestWebhook(
+  _prevState: WebhookState | undefined,
+  _formData: FormData
+): Promise<WebhookState> {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return { success: false, message: 'Yetkisiz erişim.' };
+  }
+
+  const { N8N_WEBHOOK_URL, N8N_WEBHOOK_USER, N8N_WEBHOOK_PASS } = process.env;
+  if (!N8N_WEBHOOK_URL || !N8N_WEBHOOK_USER || !N8N_WEBHOOK_PASS) {
+    return { success: false, message: 'Sunucu yapılandırması eksik (n8n). Lütfen ortam değişkenlerini ayarlayın.' };
+  }
+
+  try {
+    const basicAuth = Buffer.from(`${N8N_WEBHOOK_USER}:${N8N_WEBHOOK_PASS}`).toString('base64');
+
+    const res = await fetch(N8N_WEBHOOK_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Basic ${basicAuth}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userId: session.user.id, source: 'TestDriveButton' }),
+      // You can add a timeout controller here if desired
+      cache: 'no-store',
+    });
+
+    if (res.ok) {
+      return { success: true, message: 'Webhook başarıyla tetiklendi!' };
+    }
+
+    return { success: false, message: 'N8N tetiklenirken hata oluştu.' };
+  } catch (err) {
+    console.error('❌ n8n webhook error:', err);
+    return { success: false, message: 'Beklenmeyen bir hata oluştu.' };
   }
 }
