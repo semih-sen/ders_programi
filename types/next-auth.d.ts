@@ -10,6 +10,8 @@ declare module "next-auth" {
   interface Session {
     user: {
       id: string;
+      role: "USER" | "ADMIN";
+      isActivated: boolean;
     } & DefaultSession["user"];
     accessToken?: string;
     error?: string;
@@ -17,12 +19,16 @@ declare module "next-auth" {
 
   interface User {
     id: string;
+    role?: "USER" | "ADMIN";
+    isActivated?: boolean;
   }
 }
 
 declare module "next-auth/jwt" {
   interface JWT {
     userId?: string;
+    role?: "USER" | "ADMIN";
+    isActivated?: boolean;
     accessToken?: string;
     refreshToken?: string;
     accessTokenExpires?: number;

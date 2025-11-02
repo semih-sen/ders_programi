@@ -20,6 +20,13 @@ model User {
   sessions      Session[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+  
+  // License & Role Management
+  role          Role      @default(USER)
+  isActivated   Boolean   @default(false)
+  
+  // Relation to the license key they used
+  activatedKey  LicenseKey?
 }
 
 model Account {
@@ -55,4 +62,19 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model LicenseKey {
+  id        String   @id // Custom 'TAK-...' string
+  createdAt DateTime @default(now())
+  isUsed    Boolean  @default(false)
+  
+  // Relation to the user who activated this key
+  activatedByUserId String?  @unique
+  activatedByUser   User?    @relation(fields: [activatedByUserId], references: [id])
+}
+
+enum Role {
+  USER
+  ADMIN
 }

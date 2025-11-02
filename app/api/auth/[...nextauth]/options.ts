@@ -51,16 +51,36 @@ export const authOptions: NextAuthOptions = {
     /**
      * This callback is called whenever a JWT is created or updated
      */
-    async jwt({ token, account, user }) {
+  async jwt({ token, account, user, trigger }) {
       // Initial sign in
       if (account && user) {
+        // Fetch the full user data including role and isActivated
+        const dbUser = await prisma.user.findUnique({
+          where: { id: user.id },
+          select: { id: true, role: true, isActivated: true }
+        });
+
         return {
           ...token,
           accessToken: account.access_token,
           refreshToken: account.refresh_token,
           accessTokenExpires: account.expires_at ? account.expires_at * 1000 : 0,
           userId: user.id,
+          role: dbUser?.role || "USER",
+          isActivated: dbUser?.isActivated || false,
         };
+      }
+
+      // Always refresh role/activation from DB for consistency after activation changes
+      if (token.userId) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.userId as string },
+          select: { role: true, isActivated: true },
+        });
+        if (dbUser) {
+          token.role = dbUser.role;
+          token.isActivated = dbUser.isActivated;
+        }
       }
 
       // Return previous token if the access token has not expired yet
@@ -79,6 +99,8 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (token) {
         session.user.id = token.userId as string;
+        session.user.role = (token.role as "USER" | "ADMIN") || "USER";
+        session.user.isActivated = token.isActivated || false;
         session.accessToken = token.accessToken as string;
         session.error = token.error as string | undefined;
       }

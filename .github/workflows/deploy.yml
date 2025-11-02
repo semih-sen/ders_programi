@@ -46,9 +46,12 @@ jobs:
       - name: 6. Prisma Client'ı Yeniden Oluştur
         run: npx prisma generate
         working-directory: /home/ghrunner/ders_programi/ders_programi
-
+        
       - name: 7. Projeyi Yeniden Derle (Build)
-        run: /home/ghrunner/.nvm/versions/node/v25.1.0/bin/pm2 restart cinnasium 
+        run: npm run build
+        working-directory: /home/ghrunner/ders_programi/ders_programi
+      - name: 8. Projeyi Yeniden Başlat
+        run: /home/ghrunner/.nvm/versions/node/v25.1.0/bin/pm2 restart cinnasium
         working-directory: /home/ghrunner/ders_programi/ders_programi
 
       
