@@ -30,20 +30,25 @@ jobs:
         with:
           node-version: '25' # Sunucunuzdaki sürümle aynı olsun
 
-      - name: 3. Bağımlılıkları Yükle (Değişiklik varsa)
+      - name: 3. Yeni Kodu Proje Dizinine Kopyala (rsync)
+        # $GITHUB_WORKSPACE'teki kodu asıl proje dizinimize kopyalıyoruz
+        # --delete: Yeni committe silinmiş olan dosyaları proje dizininden de siler
+        # -a: Arşiv modu (izinleri, sembolik linkleri vb. korur)
+        run: rsync -a --delete $GITHUB_WORKSPACE/ /home/ghrunner/ders_programi/ders_programi/  
+      - name: 4. Bağımlılıkları Yükle (Değişiklik varsa)
         run: npm install
         working-directory: /home/ghrunner/ders_programi/ders_programi
 
-      - name: 4. Veritabanı Değişikliklerini Uygula
+      - name: 5. Veritabanı Değişikliklerini Uygula
         # Eğer schema.prisma'da değişiklik yaptıysanız bu şart.
         run: npx prisma db push
         working-directory: /home/ghrunner/ders_programi/ders_programi
 
-      - name: 5. Prisma Client'ı Yeniden Oluştur
+      - name: 6. Prisma Client'ı Yeniden Oluştur
         run: npx prisma generate
         working-directory: /home/ghrunner/ders_programi/ders_programi
 
-      - name: 6. Projeyi Yeniden Derle (Build)
+      - name: 7. Projeyi Yeniden Derle (Build)
         run: pm2 restart cinnasium 
         working-directory: /home/ghrunner/ders_programi/ders_programi
 
