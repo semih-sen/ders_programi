@@ -33,7 +33,7 @@ jobs:
         # $GITHUB_WORKSPACE'teki kodu asıl proje dizinimize kopyalıyoruz
         # --delete: Yeni committe silinmiş olan dosyaları proje dizininden de siler
         # -a: Arşiv modu (izinleri, sembolik linkleri vb. korur)
-        run: rsync -a --delete $GITHUB_WORKSPACE/ /home/ghrunner/ders_programi/ders_programi/  
+        run: rsync -a --delete --exclude '.env' --exclude '.env.local' --exclude 'node_modules' $GITHUB_WORKSPACE/ /home/ghrunner/ders_programi/ders_programi/  
       - name: 4. Bağımlılıkları Yükle (Değişiklik varsa)
         run: npm install
         working-directory: /home/ghrunner/ders_programi/ders_programi
