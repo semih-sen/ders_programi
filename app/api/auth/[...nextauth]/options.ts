@@ -27,6 +27,7 @@ export const authOptions: NextAuthOptions = {
             "openid",
             "https://www.googleapis.com/auth/userinfo.email",
             "https://www.googleapis.com/auth/userinfo.profile",
+            "https://www.googleapis.com/auth/calendar.events.owned"
             // Add additional Google scopes as needed, for example:
             // "https://www.googleapis.com/auth/calendar",
             // "https://www.googleapis.com/auth/drive.file",
