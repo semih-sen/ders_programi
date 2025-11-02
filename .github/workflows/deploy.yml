@@ -39,8 +39,6 @@ jobs:
         run: npx prisma generate
 
       - name: 6. Projeyi Yeniden Derle (Build)
-        run: npm run build
+        run: pm2 restart cinnasium 
 
-      - name: 7. PM2 ile Uygulamayı Yeniden Başlat
-        # pm2, çalışan 'cinnasium' uygulamasını sıfır kesintiyle günceller
-        run: pm2 reload cinnasium
+      

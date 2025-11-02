@@ -1,10 +1,11 @@
 import type { Config } from 'tailwindcss'
 
+// Minimal config compatible with Tailwind CSS v4
 const config: Config = {
   content: [
-    './pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './components/**/*.{js,ts,jsx,tsx,mdx}',
     './app/**/*.{js,ts,jsx,tsx,mdx}',
+    './components/**/*.{js,ts,jsx,tsx,mdx}',
+    './pages/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
     extend: {
@@ -14,8 +15,7 @@ const config: Config = {
       },
     },
   },
-  plugins: [
-    require('@tailwindcss/typography'),
-  ],
+  // For Tailwind v4, prefer using @plugin in CSS. Keeping plugins empty.
+  plugins: [],
 }
 export default config
