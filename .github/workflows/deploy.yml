@@ -21,7 +21,7 @@ jobs:
     steps:
       - name: 1. Kodu Çek (Checkout)
         # GitHub'dan en güncel kodu runner'ın çalışma dizinine indirir
-        uses: actions/checkout@4
+        uses: actions/checkout@v4
         with:
           path: /home/ghrunner/ders_programi/ders_programi
 
