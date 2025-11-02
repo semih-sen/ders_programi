@@ -26,7 +26,7 @@ jobs:
       - name: 2. Node.js Sürümünü Ayarla
         uses: actions/setup-node@v4
         with:
-          node-version: '20' # Sunucunuzdaki sürümle aynı olsun
+          node-version: '25' # Sunucunuzdaki sürümle aynı olsun
 
       - name: 3. Bağımlılıkları Yükle (Değişiklik varsa)
         run: npm install
