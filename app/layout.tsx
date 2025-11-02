@@ -1,6 +1,9 @@
+import './globals.css'
+import Footer from './components/Footer'
+
 export const metadata = {
-  title: 'Ders Programi',
-  description: 'Course scheduling application with secure Google OAuth',
+  title: 'Cinnasium Takvimdâr',
+  description: 'İstanbul Tıp Fakültesi ders programınızı otomatik olarak Google Takviminize aktarın.',
 }
 
 export default function RootLayout({
@@ -9,8 +12,11 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body>{children}</body>
+    <html lang="tr">
+      <body className="min-h-screen flex flex-col">
+        <div className="flex-grow">{children}</div>
+        <Footer />
+      </body>
     </html>
   )
 }
