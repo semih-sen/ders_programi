@@ -48,7 +48,7 @@ jobs:
         working-directory: /home/ghrunner/ders_programi/ders_programi
 
       - name: 7. Projeyi Yeniden Derle (Build)
-        run: pm2 restart cinnasium 
+        run: /home/ghrunner/.nvm/versions/node/v25.1.0/bin/pm2 restart cinnasium 
         working-directory: /home/ghrunner/ders_programi/ders_programi
 
       
