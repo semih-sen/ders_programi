@@ -75,3 +75,32 @@ export async function deleteLicenseKey(keyId: string) {
     return { error: 'Anahtar silinirken bir hata oluştu.' };
   }
 }
+'use server';
+
+
+async function checkAdmin() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user || session.user.role !== 'ADMIN') {
+    throw new Error('Unauthorized');
+  }
+}
+
+
+
+
+export async function revokeLicense(keyId: string, userId: string) {
+  await checkAdmin();
+  await prisma.$transaction([
+    prisma.licenseKey.update({
+      where: { id: keyId },
+      data: { isUsed: false, activatedByUserId: null },
+    }),
+    prisma.user.update({
+      where: { id: userId },
+      data: { isActivated: false },
+    }),
+  ]);
+  revalidatePath('/admin');
+  revalidatePath('/admin/licenses');
+  return { success: true };
+}

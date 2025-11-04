@@ -24,6 +24,7 @@ model User {
   // License & Role Management
   role          Role      @default(USER)
   isActivated   Boolean   @default(false)
+  isBanned      Boolean   @default(false)
   
   // Relation to the license key they used
   activatedKey  LicenseKey?
