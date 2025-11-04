@@ -4,29 +4,40 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import fs from 'node:fs';
 import path from 'node:path';
 
-// Helper to parse Turkish date (e.g., "2 Eylül 2025")
+// --- HELPER FUNCTIONS ---
+// Helper to find the dynamic date key (e.g., "...LİSTESİ")
+const findDateKey = (obj: any): string | null => {
+  return Object.keys(obj).find(k => k.includes('LİSTESİ')) || null;
+};
+
+// Helper to map group number (1, 2, 3) to full group name
+const mapGroupNumberToName = (num: number): string => {
+  const groupMap: { [key: number]: string } = {
+    1: "Anatomi - A (1,2,3)",
+    2: "Anatomi - B (4,5,6)",
+    3: "Anatomi - C (7,8,9)"
+    // Add more groups if they exist
+  };
+  return groupMap[num] || `Bilinmeyen Grup (${num})`;
+};
+
+// Helper to parse Turkish date (e.g., "9 Eylül 2025 Salı")
 const parseTurkishDate = (dateStr: string, timeStr: string): string | null => {
   const monthMap: { [key: string]: string } = {
     'Ocak': '01', 'Şubat': '02', 'Mart': '03', 'Nisan': '04', 'Mayıs': '05', 'Haziran': '06',
     'Temmuz': '07', 'Ağustos': '08', 'Eylül': '09', 'Ekim': '10', 'Kasım': '11', 'Aralık': '12'
   };
-  // Remove potential ordinal dots (e.g., "2." -> "2")
-  const cleanedDateStr = dateStr.replace('.', '');
+  const cleanedDateStr = dateStr.replace('.', '').replace('Salı', '').replace('Pazartesi', '').replace('Çarşamba', '').replace('Perşembe', '').replace('Cuma', '').trim();
   const parts = cleanedDateStr.split(' ');
-  if (parts.length < 3) {
-    console.warn(`Invalid date format, skipping: ${dateStr}`);
-    return null; 
-  }
+  if (parts.length < 3) return null; 
   const day = parts[0].padStart(2, '0');
   const month = monthMap[parts[1]];
   const year = parts[2];
-  if (!day || !month || !year) {
-    console.warn(`Invalid date components, skipping: ${dateStr}`);
-    return null;
-  }
-  return `${year}-${month}-${day}T${timeStr}:00`; // ISO 8601
+  if (!day || !month || !year) return null;
+  return `${year}-${month}-${day}T${timeStr}:00`;
 };
 
+// --- API HANDLER ---
 export async function POST(request: Request) {
   try {
     // 1. Security: Check for Admin session
@@ -43,35 +54,40 @@ export async function POST(request: Request) {
     }
 
     const fileContent = await file.text();
-    const flatArray: string[] = JSON.parse(fileContent);
+    const rawJsonData: any[] = JSON.parse(fileContent);
 
-    // 3. Parsing Logic: Convert Flat Array to Structured JSON
-    // We parse the 4-element pattern: [summary, group, date, timeRange]
+    // 3. Parsing Logic: "State Machine" for 3-row pattern
     const structuredData: any[] = [];
-    if (flatArray.length % 4 !== 0) {
-      return NextResponse.json({ error: 'JSON dosyası bozuk. Veri 4\'lü gruplar halinde olmalı.' }, { status: 400 });
-    }
+    let currentSharedDate: string | null = null;
 
-    for (let i = 0; i < flatArray.length; i += 4) {
-      const summary = flatArray[i];
-      const group = flatArray[i + 1];
-      const dateStr = flatArray[i + 2];
-      const timeRangeStr = flatArray[i + 3];
+    for (const row of rawJsonData) {
+      // Check if this row *also* contains a new date
+      const dateKey = findDateKey(row);
+      if (dateKey) {
+        currentSharedDate = row[dateKey];
+      }
 
-      const [startTime, endTime] = timeRangeStr.split('-');
-      if (!summary || !group || !dateStr || !startTime || !endTime) {
-        console.warn(`Skipping incomplete entry at index ${i}`);
+      // Now process the time and group (which might be in the same row or a following row)
+      const timeRangeStr = row.Column3;
+      const groupNum = row.Column4;
+
+      if (!timeRangeStr || !groupNum || !currentSharedDate) {
+        // This row is incomplete (e.g., just a header), or we haven't found a date yet.
         continue;
       }
 
-      const startISO = parseTurkishDate(dateStr, startTime);
-      const endISO = parseTurkishDate(dateStr, endTime);
+      const [startTime, endTime] = timeRangeStr.split('-');
+      if (!startTime || !endTime) continue;
+
+      const startISO = parseTurkishDate(currentSharedDate, startTime);
+      const endISO = parseTurkishDate(currentSharedDate, endTime);
+      const groupName = mapGroupNumberToName(groupNum);
 
       if (startISO && endISO) {
         structuredData.push({
-          summary: summary.trim(),
-          group: group.trim(),
-          location: 'Anatomi Diseksiyon Salonu', // Default location
+          summary: `Anatomi Diseksiyonu (${groupName})`,
+          group: groupName,
+          location: 'Anatomi Diseksiyon Salonu',
           start: { dateTime: startISO, timeZone: 'Europe/Istanbul' },
           end: { dateTime: endISO, timeZone: 'Europe/Istanbul' }
         });
