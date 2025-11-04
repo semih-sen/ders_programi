@@ -75,7 +75,6 @@ export async function deleteLicenseKey(keyId: string) {
     return { error: 'Anahtar silinirken bir hata oluştu.' };
   }
 }
-'use server';
 
 
 async function checkAdmin() {
