@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import ActivationForm from './ActivationForm';
 import OnboardingForm from './OnboardingForm';
 import TestDriveForm from './TestDriveForm';
+import ResetPreferencesButton from './ResetPreferencesButton';
 
 export const metadata = {
   title: 'Dashboard - Cinnasium Takvimdâr',
@@ -170,20 +171,7 @@ export default async function DashboardPage() {
               <h2 className="text-2xl font-bold text-white mb-1">Tercihlerim</h2>
               <p className="text-slate-400 text-sm">Mevcut ayarlarınız ve ders seçimleriniz</p>
             </div>
-            <a
-              href="/dashboard?reselect=true"
-              onClick={(e) => {
-                e.preventDefault();
-                if (confirm('Tercihlerinizi yeniden düzenlemek ister misiniz? Mevcut ayarlarınız kaybolacak.')) {
-                  // Reset onboarding status
-                  fetch('/api/reset-onboarding', { method: 'POST' })
-                    .then(() => window.location.reload());
-                }
-              }}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors text-sm"
-            >
-              🔄 Yeniden Düzenle
-            </a>
+            <ResetPreferencesButton />
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
