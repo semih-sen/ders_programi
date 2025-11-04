@@ -1,101 +1,104 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
-import fs from 'node:fs';
-// Note: The `docx` package is primarily for document generation, not parsing.
-// We still install it as requested, but for robust server-side parsing of tables
-// from .docx we use `mammoth` (to HTML) and then parse the HTML table structure.
-import type { Document as DocxDocument, Packer, Paragraph, Table } from 'docx';
 import mammoth from 'mammoth';
-import * as cheerio from 'cheerio';
+import { load } from 'cheerio';
+import fs from 'node:fs';
+import path from 'node:path';
 
-// Persistent JSON output path (ensure permissions on your server)
-const SAVE_PATH = '/var/data/cinnasium/anatomi-gruplari.json';
+// Helper to parse Turkish date (e.g., "2 Eylül 2025")
+const parseTurkishDate = (dateStr: string, timeStr: string): string | null => {
+  const monthMap: { [key: string]: string } = {
+    'Ocak': '01', 'Şubat': '02', 'Mart': '03', 'Nisan': '04', 'Mayıs': '05', 'Haziran': '06',
+    'Temmuz': '07', 'Ağustos': '08', 'Eylül': '09', 'Ekim': '10', 'Kasım': '11', 'Aralık': '12'
+  };
+
+  const parts = dateStr.split(' ').filter(Boolean);
+  if (parts.length < 3) return null; // e.g., "2", "Eylül", "2025"
+
+  const day = parts[0].padStart(2, '0');
+  const month = monthMap[parts[1]];
+  const year = parts[2];
+
+  if (!day || !month || !year) return null;
+
+  const t = timeStr.trim();
+  // Normalize possible time formats like "13:30" or "13.30"
+  const hhmm = t.replace('.', ':');
+  return `${year}-${month}-${day}T${hhmm}:00`;
+};
 
 export async function POST(request: Request) {
   try {
-    // 1) Security: Only ADMIN can upload
+    // 1. Security: Check for Admin session
     const session = await getServerSession(authOptions);
     if (!session?.user || session.user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Yetkisiz erişim.' }, { status: 401 });
     }
 
-    // 2) Receive form-data and get the file
+    // 2. File Handling
     const formData = await request.formData();
-    const file = formData.get('file') as File | null;
+    const file = formData.get('file') as File;
     if (!file) {
-      return NextResponse.json({ error: 'Dosya bulunamadı' }, { status: 400 });
+      return NextResponse.json({ error: 'Dosya bulunamadı.' }, { status: 400 });
     }
-
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    // 3) Parse .docx -> HTML -> Extract table rows to JSON
-    //    We convert the Word document to HTML using mammoth, then walk tables.
+    // 3. Parsing Logic: Mammoth (docx -> HTML)
     const { value: html } = await mammoth.convertToHtml({ buffer });
-    const $ = cheerio.load(html);
 
-    const jsonData: Array<{ diseksiyon: string; grup: string }> = [];
+    // 4. Parsing Logic: Cheerio (HTML -> JSON)
+    const $ = load(html);
+    const jsonData: any[] = [];
 
-    $('table').each((_, tableEl) => {
-      const rows = $(tableEl).find('tr');
+    // Find the first table in the document
+    $('table').first().find('tr').each((i, row) => {
+      if (i === 0) return; // Skip header row
 
-      // Heuristic A: If rows have >= 2 cells, treat first two cells as [diseksiyon, grup]
-      rows.each((__idx, tr) => {
-        const cells = $(tr).find('td, th');
-        if (cells.length >= 2) {
-          const diseksiyonRaw = $(cells[0]).text().trim();
-          const grupRaw = $(cells[1]).text().trim();
-          const diseksiyon = normalizeLabel(diseksiyonRaw, ['Diseksiyon', 'Diseksiyon Adı']);
-          const grup = normalizeLabel(grupRaw, ['Grup', 'Grup Adı']);
-          if (diseksiyon && grup) {
-            jsonData.push({ diseksiyon, grup });
-          }
-        }
-      });
+      const cells = $(row).find('td, th');
+      if (cells.length >= 4) {
+        const diseksiyon = $(cells[0]).text().trim();
+        const grup = $(cells[1]).text().trim();
+        const tarih = $(cells[2]).text().trim();
+        const saat = $(cells[3]).text().trim();
 
-      // Heuristic B: If table appears as two single-row entries (row1=Diseksiyon, row2=Grup)
-      // attempt to pair consecutive rows when each has one cell.
-      if (jsonData.length === 0 && rows.length >= 2) {
-        for (let i = 0; i < rows.length - 1; i += 2) {
-          const r1Cells = $(rows[i]).find('td, th');
-          const r2Cells = $(rows[i + 1]).find('td, th');
-          if (r1Cells.length === 1 && r2Cells.length === 1) {
-            const diseksiyonRaw = $(r1Cells[0]).text().trim();
-            const grupRaw = $(r2Cells[0]).text().trim();
-            const diseksiyon = normalizeLabel(diseksiyonRaw, ['Diseksiyon', 'Diseksiyon Adı']);
-            const grup = normalizeLabel(grupRaw, ['Grup', 'Grup Adı']);
-            if (diseksiyon && grup) {
-              jsonData.push({ diseksiyon, grup });
-            }
-          }
+        // Extract start and end times (e.g., "13:30-16:20")
+        const [startTimeRaw, endTimeRaw] = saat.split('-').map(s => s?.trim());
+        if (!startTimeRaw || !endTimeRaw) return; // Skip row if time is invalid
+
+        const startISO = parseTurkishDate(tarih, startTimeRaw);
+        const endISO = parseTurkishDate(tarih, endTimeRaw);
+
+        if (startISO && endISO) {
+          jsonData.push({
+            summary: diseksiyon,
+            group: grup,
+            location: 'Anatomi Diseksiyon Salonu', // Default location
+            start: { dateTime: startISO, timeZone: 'Europe/Istanbul' },
+            end: { dateTime: endISO, timeZone: 'Europe/Istanbul' }
+          });
         }
       }
     });
 
-    // 4) Save JSON to disk
-    // Ensure parent directory exists (no-op if already present)
-    try {
-      fs.mkdirSync(require('node:path').dirname(SAVE_PATH), { recursive: true });
-    } catch {}
-
-    fs.writeFileSync(SAVE_PATH, JSON.stringify(jsonData, null, 2), 'utf8');
-
-    return NextResponse.json({ success: true, message: 'Anatomi grubu dosyası başarıyla güncellendi.' });
-  } catch (err) {
-    console.error('Upload anatomi parse/save error:', err);
-    return NextResponse.json({ error: 'İşlem sırasında bir hata oluştu' }, { status: 500 });
-  }
-}
-
-function normalizeLabel(value: string, possiblePrefixes: string[]): string {
-  let v = value;
-  for (const p of possiblePrefixes) {
-    const withColon = `${p}:`;
-    if (v.toLowerCase().startsWith(withColon.toLowerCase())) {
-      v = v.slice(withColon.length).trim();
-    } else if (v.toLowerCase().startsWith(p.toLowerCase())) {
-      v = v.slice(p.length).trim();
+    if (jsonData.length === 0) {
+      return NextResponse.json({ error: 'Dosyadan veri okunamadı. Dosya formatı bozuk olabilir.' }, { status: 400 });
     }
+
+    // 5. Saving the JSON
+    const saveDir = path.join(process.cwd(), 'private-data'); // Use a persistent dir
+    const savePath = path.join(saveDir, 'anatomi-gruplari.json');
+
+    if (!fs.existsSync(saveDir)) {
+      fs.mkdirSync(saveDir, { recursive: true });
+    }
+
+    fs.writeFileSync(savePath, JSON.stringify(jsonData, null, 2));
+
+    return NextResponse.json({ success: true, message: `Anatomi programı başarıyla güncellendi. ${jsonData.length} ders işlendi.` });
+
+  } catch (error) {
+    console.error('Anatomi Upload Error:', error);
+    return NextResponse.json({ error: 'Dosya işlenirken sunucu hatası oluştu.' }, { status: 500 });
   }
-  return v;
 }
