@@ -86,8 +86,7 @@ export async function POST(request: Request) {
       courseName: sub.course.name,
       notifications: sub.notifications,
       addToCalendar: sub.addToCalendar,
-      createdAt: sub.createdAt.toISOString(),
-      updatedAt: sub.updatedAt.toISOString()
+     
     }));
 
     // 7. Build Final Response Object for n8n
