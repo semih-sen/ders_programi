@@ -68,36 +68,196 @@ export default async function DashboardPage() {
   }
 
   // STEP 3: If user IS activated AND has completed onboarding, show main application
+  // Fetch user's preferences and subscriptions
+  const userPreferences = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: {
+      uygulamaGrubu: true,
+      anatomiGrubu: true,
+      yemekhaneEklensin: true,
+      classYear: true,
+      language: true,
+      courseSubscriptions: {
+        include: {
+          course: true,
+        },
+      },
+    },
+  });
+
+  const subscribedCourses = userPreferences?.courseSubscriptions || [];
+  const calendarCourses = subscribedCourses.filter((sub: any) => sub.addToCalendar);
+  const notificationCourses = subscribedCourses.filter((sub: any) => sub.notifications);
+
   return (
-    <main className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 py-12">
+    <main className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 py-8 sm:py-12">
       <div className="container mx-auto px-4 max-w-6xl">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">
+          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">
             Hoş Geldiniz, {user.name || 'Kullanıcı'}! 👋
           </h1>
-          <p className="text-slate-400">
+          <p className="text-slate-400 text-sm sm:text-base">
             Hesabınız aktif. Ders programınızı yönetmeye başlayabilirsiniz.
           </p>
         </div>
 
-        {/* Status Card */}
-        <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/30 rounded-xl p-6 mb-8">
-          <div className="flex items-center">
-            <div className="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center mr-4">
-              <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-1">
-                Hesabınız Aktif ✨
-              </h3>
-              <p className="text-green-300 text-sm">
-                Tüm özelliklere erişiminiz var
-              </p>
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+          {/* Active Status */}
+          <div className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 border border-green-500/30 rounded-xl p-5">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
+                <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-xs text-slate-400">Durum</p>
+                <p className="text-lg font-bold text-green-400">Aktif</p>
+              </div>
             </div>
           </div>
+
+          {/* Application Group */}
+          <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-5">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                <span className="text-2xl font-bold text-blue-400">{userPreferences?.uygulamaGrubu || '?'}</span>
+              </div>
+              <div>
+                <p className="text-xs text-slate-400">Uygulama Grubu</p>
+                <p className="text-lg font-bold text-white">Grup {userPreferences?.uygulamaGrubu || 'Belirlenmedi'}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Subscribed Courses */}
+          <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-5">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-xs text-slate-400">Takip Edilen Dersler</p>
+                <p className="text-lg font-bold text-white">{calendarCourses.length} Ders</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Notifications */}
+          <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-5">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center">
+                <svg className="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-xs text-slate-400">Bildirimler</p>
+                <p className="text-lg font-bold text-white">{notificationCourses.length} Ders</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Current Preferences Summary */}
+        <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 sm:p-8 border border-slate-700 mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-bold text-white mb-1">Tercihlerim</h2>
+              <p className="text-slate-400 text-sm">Mevcut ayarlarınız ve ders seçimleriniz</p>
+            </div>
+            <a
+              href="/dashboard?reselect=true"
+              onClick={(e) => {
+                e.preventDefault();
+                if (confirm('Tercihlerinizi yeniden düzenlemek ister misiniz? Mevcut ayarlarınız kaybolacak.')) {
+                  // Reset onboarding status
+                  fetch('/api/reset-onboarding', { method: 'POST' })
+                    .then(() => window.location.reload());
+                }
+              }}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors text-sm"
+            >
+              🔄 Yeniden Düzenle
+            </a>
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Basic Settings */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-slate-300 mb-3">Temel Ayarlar</h3>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-slate-400">Uygulama Grubu:</span>
+                <span className="font-semibold text-white">{userPreferences?.uygulamaGrubu || '-'}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-slate-400">Anatomi Grubu:</span>
+                <span className="font-semibold text-white">{userPreferences?.anatomiGrubu || '-'}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-slate-400">Dönem:</span>
+                <span className="font-semibold text-white">{userPreferences?.classYear ? `Dönem ${userPreferences.classYear}` : '-'}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-slate-400">Dil:</span>
+                <span className="font-semibold text-white">{userPreferences?.language || 'TR'}</span>
+              </div>
+            </div>
+
+            {/* Calendar Courses */}
+            <div>
+              <h3 className="text-sm font-semibold text-slate-300 mb-3">Takvime Eklenen Dersler ({calendarCourses.length})</h3>
+              <div className="space-y-2 max-h-40 overflow-y-auto">
+                {calendarCourses.length > 0 ? (
+                  calendarCourses.map((sub: any) => (
+                    <div key={sub.courseId} className="flex items-center gap-2 text-sm">
+                      <svg className="w-4 h-4 text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      <span className="text-slate-300">{sub.course.name}</span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-slate-500 text-sm">Ders seçilmedi</p>
+                )}
+              </div>
+            </div>
+
+            {/* Notification Courses */}
+            <div>
+              <h3 className="text-sm font-semibold text-slate-300 mb-3">Bildirim Aktif Dersler ({notificationCourses.length})</h3>
+              <div className="space-y-2 max-h-40 overflow-y-auto">
+                {notificationCourses.length > 0 ? (
+                  notificationCourses.map((sub: any) => (
+                    <div key={sub.courseId} className="flex items-center gap-2 text-sm">
+                      <svg className="w-4 h-4 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
+                      </svg>
+                      <span className="text-slate-300">{sub.course.name}</span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-slate-500 text-sm">Bildirim yok</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Cafeteria Setting */}
+          {userPreferences?.yemekhaneEklensin && (
+            <div className="mt-6 pt-6 border-t border-slate-700">
+              <div className="flex items-center gap-2 text-sm">
+                <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                <span className="text-white font-semibold">🍽️ Yemekhane listesi takvime ekleniyor</span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Main Content - Application Selection */}
