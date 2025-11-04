@@ -12,6 +12,7 @@ declare module "next-auth" {
       id: string;
       role: "USER" | "ADMIN";
       isActivated: boolean;
+      hasCompletedOnboarding: boolean;
     } & DefaultSession["user"];
     accessToken?: string;
     error?: string;
@@ -21,6 +22,7 @@ declare module "next-auth" {
     id: string;
     role?: "USER" | "ADMIN";
     isActivated?: boolean;
+    hasCompletedOnboarding?: boolean;
   }
 }
 
@@ -29,6 +31,7 @@ declare module "next-auth/jwt" {
     userId?: string;
     role?: "USER" | "ADMIN";
     isActivated?: boolean;
+    hasCompletedOnboarding?: boolean;
     accessToken?: string;
     refreshToken?: string;
     accessTokenExpires?: number;

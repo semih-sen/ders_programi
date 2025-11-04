@@ -58,7 +58,7 @@ export const authOptions: NextAuthOptions = {
         // Fetch the full user data including role and isActivated
         const dbUser = await prisma.user.findUnique({
           where: { id: user.id },
-          select: { id: true, role: true, isActivated: true }
+          select: { id: true, role: true, isActivated: true, hasCompletedOnboarding: true }
         });
 
         return {
@@ -69,6 +69,7 @@ export const authOptions: NextAuthOptions = {
           userId: user.id,
           role: dbUser?.role || "USER",
           isActivated: dbUser?.isActivated || false,
+          hasCompletedOnboarding: dbUser?.hasCompletedOnboarding || false,
         };
       }
 
@@ -76,11 +77,12 @@ export const authOptions: NextAuthOptions = {
       if (token.userId) {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.userId as string },
-          select: { role: true, isActivated: true },
+          select: { role: true, isActivated: true, hasCompletedOnboarding: true },
         });
         if (dbUser) {
           token.role = dbUser.role;
           token.isActivated = dbUser.isActivated;
+          token.hasCompletedOnboarding = dbUser.hasCompletedOnboarding;
         }
       }
 
@@ -102,6 +104,7 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.userId as string;
         session.user.role = (token.role as "USER" | "ADMIN") || "USER";
         session.user.isActivated = token.isActivated || false;
+        session.user.hasCompletedOnboarding = token.hasCompletedOnboarding || false;
         session.accessToken = token.accessToken as string;
         session.error = token.error as string | undefined;
       }

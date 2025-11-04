@@ -1,7 +1,9 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { redirect } from 'next/navigation';
+import { prisma } from '@/lib/prisma';
 import ActivationForm from './ActivationForm';
+import OnboardingForm from './OnboardingForm';
 import TestDriveForm from './TestDriveForm';
 
 export const metadata = {
@@ -20,7 +22,7 @@ export default async function DashboardPage() {
 
   const user = session.user;
 
-  // If user is NOT activated, show activation form
+  // STEP 1: If user is NOT activated, show activation form
   if (!user.isActivated) {
     return (
       <main className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center px-4">
@@ -55,7 +57,17 @@ export default async function DashboardPage() {
     );
   }
 
-  // If user IS activated, show main application
+  // STEP 2: If user IS activated but has NOT completed onboarding, show onboarding form
+  if (user.isActivated && !user.hasCompletedOnboarding) {
+    // Fetch all available courses
+    const courses = await prisma.course.findMany({
+      orderBy: { name: 'asc' },
+    });
+
+    return <OnboardingForm courses={courses} />;
+  }
+
+  // STEP 3: If user IS activated AND has completed onboarding, show main application
   return (
     <main className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 py-12">
       <div className="container mx-auto px-4 max-w-6xl">

@@ -26,8 +26,19 @@ model User {
   isActivated   Boolean   @default(false)
   isBanned      Boolean   @default(false)
   
+  // Onboarding & Preferences
+  hasCompletedOnboarding Boolean   @default(false)
+  uygulamaGrubu         String?
+  anatomiGrubu          String?
+  yemekhaneEklensin     Boolean   @default(false)
+  classYear             Int?
+  language              Language?
+  
   // Relation to the license key they used
   activatedKey  LicenseKey?
+  
+  // Relation to course preferences
+  courseSubscriptions UserCourseSubscription[]
 }
 
 model Account {
@@ -75,7 +86,34 @@ model LicenseKey {
   activatedByUser   User?    @relation(fields: [activatedByUserId], references: [id])
 }
 
+// Available courses for users to subscribe to
+model Course {
+  id    String @id @default(cuid())
+  name  String @unique // e.g., "Fizyoloji", "Anatomi", "Histoloji"
+  
+  userSubscriptions UserCourseSubscription[]
+}
+
+// Join table for user course preferences
+model UserCourseSubscription {
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId   String
+  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  
+  notifications  Boolean  @default(true)
+  addToCalendar  Boolean  @default(true)
+  
+  @@id([userId, courseId])
+}
+
 enum Role {
   USER
   ADMIN
+}
+
+// FOR FUTURE USE
+enum Language {
+  TR
+  EN
 }
