@@ -16,13 +16,13 @@ export default async function AdminLayout({ children }: { children: ReactNode })
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
       <div className="flex flex-col lg:flex-row">
         {/* Mobile Header */}
-        <div className="lg:hidden bg-slate-900/50 border-b border-slate-700 backdrop-blur-sm p-4">
+        <div className="lg:hidden bg-slate-900/50 border-b border-slate-700 backdrop-blur-sm p-4 relative z-50">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-bold text-white">🔐 Admin</h2>
               <p className="text-slate-400 text-xs">Yönetim Paneli</p>
             </div>
-            <details className="relative">
+            <details className="relative z-50">
               <summary className="list-none cursor-pointer">
                 <div className="w-10 h-10 bg-slate-800 rounded-lg flex items-center justify-center text-white">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -30,7 +30,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
                   </svg>
                 </div>
               </summary>
-              <div className="absolute right-0 mt-2 w-64 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-50">
+              <div className="absolute right-0 mt-2 w-64 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-[100]">
                 <nav className="p-2">
                   <MobileNavLink href="/admin" icon={<DashboardIcon />}>
                     Panel
