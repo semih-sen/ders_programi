@@ -5,12 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 // --- HELPER FUNCTIONS ---
-// Helper to find the dynamic date key (e.g., "...LİSTESİ")
-const findDateKey = (obj: any): string | null => {
-  return Object.keys(obj).find(k => k.includes('LİSTESİ')) || null;
-};
- 
-// Helper to parse Turkish date to YYYY-MM-DD format (e.g., "9 Eylül 2025 Salı" -> "2025-09-09")
+// Helper to parse Turkish date to YYYY-MM-DD format (e.g., "2 Eylül 2025 Salı" -> "2025-09-02")
 const parseTurkishDate = (dateStr: string): string | null => {
   const monthMap: { [key: string]: string } = {
     'Ocak': '01', 'Şubat': '02', 'Mart': '03', 'Nisan': '04', 'Mayıs': '05', 'Haziran': '06',
@@ -54,40 +49,44 @@ export async function POST(request: Request) {
     const fileContent = await file.text();
     const rawJsonData: any[] = JSON.parse(fileContent);
 
-    // 3. Parsing Logic: Stateful approach with date tracking
+    // 3. Parsing Logic: Simple iteration - each row has complete info
     const structuredData: any[] = [];
-    let currentSharedDate: string | null = null;
 
-    for (const row of rawJsonData) {
-      // Date Detection: Check if this row contains a date key (with "LİSTESİ")
-      const dateKey = findDateKey(row);
-      if (dateKey) {
-        currentSharedDate = row[dateKey];
-      }
-
-      // Data Extraction: Get time range and group number
-      const timeRangeStr = row.Column3;
-      const groupNum = row.Column4;
+    for (const item of rawJsonData) {
+      // Her satırdan gerekli bilgileri al
+      const dateStr = item.TARİH;        // e.g., "2 Eylül 2025 Salı"
+      const timeRangeStr = item.SAAT;    // e.g., "13:30-14:20"
+      const groupNum = item.GRUP;        // e.g., 1, 2, or 3
+      const summary = item.Diseksiyon;   // e.g., "DİSEKSİYON (1/13)"
 
       // Validation: Skip if ANY required field is missing
-      if (!timeRangeStr || !groupNum || !currentSharedDate) {
+      if (!dateStr || !timeRangeStr || !groupNum || !summary) {
+        console.warn('Eksik veri, satır atlanıyor:', item);
+        continue;
+      }
+
+      // Date Formatting: Convert Turkish date to YYYY-MM-DD format
+      const isoDate = parseTurkishDate(dateStr);
+      if (!isoDate) {
+        console.warn('Geçersiz tarih formatı, satır atlanıyor:', dateStr);
         continue;
       }
 
       // Time Parsing: Split "13:30-14:20" into start and end times
       const [startTime, endTime] = timeRangeStr.split('-');
-      if (!startTime || !endTime) continue;
+      if (!startTime || !endTime) {
+        console.warn('Geçersiz saat formatı, satır atlanıyor:', timeRangeStr);
+        continue;
+      }
 
-      // Date Formatting: Convert Turkish date to YYYY-MM-DD format
-      const isoDate = parseTurkishDate(currentSharedDate);
-      if (!isoDate) continue;
-
-      // Structuring: Create simple object with ONLY the required fields
+      // n8n için temiz obje oluştur
       structuredData.push({
-        date: isoDate,              // e.g., "2025-09-09"
-        startTime: startTime.trim(), // e.g., "13:30"
-        endTime: endTime.trim(),     // e.g., "14:20"
-        group: groupNum              // Raw number: 1, 2, or 3 - NO mapping!
+        date: isoDate,                    // e.g., "2025-09-02"
+        startTime: startTime.trim(),      // e.g., "13:30"
+        endTime: endTime.trim(),          // e.g., "14:20"
+        group: groupNum,                  // Raw number: 1, 2, or 3
+        summary: summary.trim(),          // e.g., "DİSEKSİYON (1/13)"
+        location: 'Anatomi Diseksiyon Salonu'  // Sabit yer
       });
     }
     
