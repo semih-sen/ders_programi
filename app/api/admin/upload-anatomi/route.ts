@@ -54,13 +54,13 @@ export async function POST(request: Request) {
 
     for (const item of rawJsonData) {
       // Her satırdan gerekli bilgileri al
-      const dateStr = item.TARİH;        // e.g., "2 Eylül 2025 Salı"
-      const timeRangeStr = item.SAAT;    // e.g., "13:30-14:20"
-      const groupNum = item.GRUP;        // e.g., 1, 2, or 3
-      const summary = item.Diseksiyon;   // e.g., "DİSEKSİYON (1/13)"
+      const dateStr = item.tarih;        // e.g., "2 Eylül 2025 Salı"
+      const timeRangeStr = item.saat;    // e.g., "13:30-14:20"
+      const groupNum = item.grup;        // e.g., 1, 2, or 3
+         
 
       // Validation: Skip if ANY required field is missing
-      if (!dateStr || !timeRangeStr || !groupNum || !summary) {
+      if (!dateStr || !timeRangeStr || !groupNum ) {
         console.warn('Eksik veri, satır atlanıyor:', item);
         continue;
       }
@@ -84,8 +84,7 @@ export async function POST(request: Request) {
         date: isoDate,                    // e.g., "2025-09-02"
         startTime: startTime.trim(),      // e.g., "13:30"
         endTime: endTime.trim(),          // e.g., "14:20"
-        group: groupNum,                  // Raw number: 1, 2, or 3
-        summary: summary.trim(),          // e.g., "DİSEKSİYON (1/13)"
+        group: groupNum,                  // Raw number: 1, 2, or 3          // e.g., "DİSEKSİYON (1/13)"
         location: 'Anatomi Diseksiyon Salonu'  // Sabit yer
       });
     }
