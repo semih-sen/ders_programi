@@ -10,10 +10,10 @@ const findDateKey = (obj: any): string | null => {
   return Object.keys(obj).find(k => k.includes('LİSTESİ')) || null;
 };
  
-// Helper to parse Turkish date (e.g., "9 Eylül 2025 Salı") and combine with time
-const parseTurkishDate = (dateStr: string, timeStr: string): string | null => {
+// Helper to parse Turkish date to YYYY-MM-DD format (e.g., "9 Eylül 2025 Salı" -> "2025-09-09")
+const parseTurkishDate = (dateStr: string): string | null => {
   const monthMap: { [key: string]: string } = {
-    'Ocak' : '01', 'Şubat': '02', 'Mart': '03', 'Nisan': '04', 'Mayıs': '05', 'Haziran': '06',
+    'Ocak': '01', 'Şubat': '02', 'Mart': '03', 'Nisan': '04', 'Mayıs': '05', 'Haziran': '06',
     'Temmuz': '07', 'Ağustos': '08', 'Eylül': '09', 'Ekim': '10', 'Kasım': '11', 'Aralık': '12'
   };
   
@@ -32,7 +32,7 @@ const parseTurkishDate = (dateStr: string, timeStr: string): string | null => {
   
   if (!day || !month || !year) return null;
   
-  return `${year}-${month}-${day}T${timeStr}:00`;
+  return `${year}-${month}-${day}`;
 };
 
 // --- API HANDLER ---
@@ -69,7 +69,7 @@ export async function POST(request: Request) {
       const timeRangeStr = row.Column3;
       const groupNum = row.Column4;
 
-      // Validation: Skip if any required field is missing
+      // Validation: Skip if ANY required field is missing
       if (!timeRangeStr || !groupNum || !currentSharedDate) {
         continue;
       }
@@ -78,20 +78,17 @@ export async function POST(request: Request) {
       const [startTime, endTime] = timeRangeStr.split('-');
       if (!startTime || !endTime) continue;
 
-      // Date/Time Formatting: Create ISO 8601 format strings
-      const startISO = parseTurkishDate(currentSharedDate, startTime.trim());
-      const endISO = parseTurkishDate(currentSharedDate, endTime.trim());
+      // Date Formatting: Convert Turkish date to YYYY-MM-DD format
+      const isoDate = parseTurkishDate(currentSharedDate);
+      if (!isoDate) continue;
 
-      if (startISO && endISO) {
-        // Structuring: Create clean object with raw group number (1, 2, or 3)
-        structuredData.push({
-          summary: 'Anatomi Diseksiyonu',
-          group: groupNum, // CRITICAL: Store raw number (1, 2, 3) - NO mapping!
-          location: 'Anatomi Diseksiyon Salonu',
-          start: { dateTime: startISO, timeZone: 'Europe/Istanbul' },
-          end: { dateTime: endISO, timeZone: 'Europe/Istanbul' }
-        });
-      }
+      // Structuring: Create simple object with ONLY the required fields
+      structuredData.push({
+        date: isoDate,              // e.g., "2025-09-09"
+        startTime: startTime.trim(), // e.g., "13:30"
+        endTime: endTime.trim(),     // e.g., "14:20"
+        group: groupNum              // Raw number: 1, 2, or 3 - NO mapping!
+      });
     }
     
     if (structuredData.length === 0) {
