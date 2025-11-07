@@ -44,6 +44,9 @@ export default async function AdminLayout({ children }: { children: ReactNode })
                   <MobileNavLink href="/admin/data-upload" icon={<UploadIcon />}>
                     Dosya Yükleme
                   </MobileNavLink>
+                  <MobileNavLink href="/admin/data-files" icon={<EditIcon />}>
+                    JSON Veri Editörü
+                  </MobileNavLink>
                   <div className="border-t border-slate-700 mt-2 pt-2">
                     <div className="px-3 py-2 text-sm">
                       <p className="text-white font-medium truncate">{session.user.name || 'Admin'}</p>
@@ -84,6 +87,9 @@ export default async function AdminLayout({ children }: { children: ReactNode })
               </NavLink>
               <NavLink href="/admin/data-upload" icon={<UploadIcon />}>
                 Dosya Yükleme
+              </NavLink>
+              <NavLink href="/admin/data-files" icon={<EditIcon />}>
+                JSON Veri Editörü
               </NavLink>
             </nav>
 
@@ -159,6 +165,14 @@ function UploadIcon() {
   return (
     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12" />
+    </svg>
+  );
+}
+
+function EditIcon() {
+  return (
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
     </svg>
   );
 }

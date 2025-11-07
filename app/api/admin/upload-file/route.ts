@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
+import { randomUUID } from 'crypto';
 import fs from 'fs';
 import path from 'path';
 
@@ -46,15 +47,26 @@ export async function POST(req: NextRequest) {
 
     // 4. Dosya içeriğini oku ve JSON kontrolü yap
     const fileContent = await file.text();
-    let jsonData;
+    let rawJsonData;
     
     try {
-      jsonData = JSON.parse(fileContent);
+      rawJsonData = JSON.parse(fileContent);
     } catch (error) {
       return NextResponse.json(
         { error: 'Geçersiz JSON formatı. Lütfen dosyanızı kontrol edin.' },
         { status: 400 }
       );
+    }
+
+    // 4.5. Her bir item'a eşsiz ID ekle
+    let structuredData;
+    if (Array.isArray(rawJsonData)) {
+      structuredData = rawJsonData.map(item => ({
+        id: randomUUID(),
+        ...item
+      }));
+    } else {
+      structuredData = rawJsonData;
     }
 
     // 5. Depolama klasör yapısını oluştur
@@ -72,7 +84,7 @@ export async function POST(req: NextRequest) {
 
     // 6. Dosyayı kaydet
     const filePath = path.join(gradeDir, `${fileType}.json`);
-    fs.writeFileSync(filePath, JSON.stringify(jsonData, null, 2), 'utf-8');
+    fs.writeFileSync(filePath, JSON.stringify(structuredData, null, 2), 'utf-8');
 
     // 7. Başarılı yanıt
     return NextResponse.json({
