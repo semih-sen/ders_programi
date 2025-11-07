@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
 
     // 4. Dosya yolunu oluştur
     const filePath = path.join(
-      process.cwd(),
+      '/home/ghrunner/cinnasium-data',
       'private-data',
       `donem-${grade}`,
       `${type}.json`
