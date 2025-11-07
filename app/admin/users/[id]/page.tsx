@@ -1,0 +1,138 @@
+import { prisma } from '@/lib/prisma';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/options';
+import { redirect } from 'next/navigation';
+import Link from 'next/link';
+
+interface UserDetailPageProps {
+  params: { id: string };
+}
+
+export const metadata = {
+  title: 'Kullanıcı Detay',
+};
+
+export default async function UserDetailPage({ params }: UserDetailPageProps) {
+  // Auth & authorization check
+  const session = await getServerSession(authOptions);
+  if (!session?.user || session.user.role !== 'ADMIN') {
+    redirect('/');
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: params.id },
+    include: {
+      accounts: true,
+      activatedKey: true,
+      courseSubscriptions: {
+        include: {
+          course: true,
+        },
+      },
+    },
+  });
+
+  if (!user) {
+    return (
+      <div className="p-6">
+        <div className="max-w-3xl mx-auto bg-slate-800/50 border border-slate-700 rounded-xl p-8">
+          <h1 className="text-2xl font-bold text-white mb-4">Kullanıcı Bulunamadı</h1>
+          <p className="text-slate-400 mb-6">İstenen kullanıcı kaydı mevcut değil veya silinmiş olabilir.</p>
+          <Link href="/admin/users" className="text-blue-400 hover:text-blue-300 underline">← Kullanıcı listesine dön</Link>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-4 sm:p-6 lg:p-8">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-white mb-2">Kullanıcı Detayı</h1>
+        <p className="text-slate-400">{user.name || 'İsimsiz'} • {user.email}</p>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-3 mb-8">
+        {/* Temel Bilgiler */}
+        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+          <h2 className="text-lg font-semibold text-white mb-4">Temel Bilgiler</h2>
+          <ul className="space-y-2 text-sm">
+            <li className="flex justify-between"><span className="text-slate-400">Email:</span><span className="text-white truncate max-w-[60%]" title={user.email || ''}>{user.email || '—'}</span></li>
+            <li className="flex justify-between"><span className="text-slate-400">Rol:</span><span className="text-white">{user.role}</span></li>
+            <li className="flex justify-between"><span className="text-slate-400">Aktif Mi?</span><span className={user.isActivated ? 'text-green-400' : 'text-slate-500'}>{user.isActivated ? 'Evet' : 'Hayır'}</span></li>
+            <li className="flex justify-between"><span className="text-slate-400">Yasaklı Mı?</span><span className={user.isBanned ? 'text-red-400' : 'text-slate-500'}>{user.isBanned ? 'Evet' : 'Hayır'}</span></li>
+            {user.isBanned && (
+              <li className="flex justify-between"><span className="text-slate-400">Yasak Sebebi:</span><span className="text-red-300 max-w-[60%] truncate" title={user.banReason || ''}>{user.banReason || '—'}</span></li>
+            )}
+            <li className="flex justify-between"><span className="text-slate-400">Oluşturulma:</span><span className="text-white">{new Date(user.createdAt).toLocaleString('tr-TR')}</span></li>
+          </ul>
+        </div>
+
+        {/* Onboarding Tercihleri */}
+        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+          <h2 className="text-lg font-semibold text-white mb-4">Onboarding Tercihleri</h2>
+          <ul className="space-y-2 text-sm">
+            <li className="flex justify-between"><span className="text-slate-400">Uygulama Grubu:</span><span className="text-white">{user.uygulamaGrubu || '—'}</span></li>
+            <li className="flex justify-between"><span className="text-slate-400">Anatomi Grubu:</span><span className="text-white">{user.anatomiGrubu || '—'}</span></li>
+            <li className="flex justify-between"><span className="text-slate-400">Yemekhane Ekli mi?</span><span className={user.yemekhaneEklensin ? 'text-green-400' : 'text-slate-500'}>{user.yemekhaneEklensin ? 'Evet' : 'Hayır'}</span></li>
+            <li className="flex justify-between"><span className="text-slate-400">Sınıf:</span><span className="text-white">{user.classYear ?? '—'}</span></li>
+            <li className="flex justify-between"><span className="text-slate-400">Dil:</span><span className="text-white">{user.language ?? '—'}</span></li>
+          </ul>
+        </div>
+
+        {/* Lisans & Hesap Bilgileri */}
+        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+          <h2 className="text-lg font-semibold text-white mb-4">Lisans & Bağlantılar</h2>
+          <ul className="space-y-2 text-sm">
+            <li className="flex justify-between"><span className="text-slate-400">Lisans Anahtarı:</span><span className="text-white">{user.activatedKey?.id || '—'}</span></li>
+            <li className="flex justify-between"><span className="text-slate-400">Hesap Sayısı:</span><span className="text-white">{user.accounts.length}</span></li>
+            {user.accounts.map((acc: any) => (
+              <li key={acc.id} className="flex justify-between"><span className="text-slate-400">Sağlayıcı:</span><span className="text-white">{acc.provider}</span></li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      {/* Seçtiği Dersler Tablosu */}
+      <div className="bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden">
+        <div className="p-6 border-b border-slate-700">
+          <h2 className="text-lg font-semibold text-white">Seçtiği Dersler</h2>
+          <p className="text-slate-400 text-sm mt-1">Kullanıcının abonelik tercihleri</p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[500px]">
+            <thead className="bg-slate-900/50">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">Ders Adı</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">Takvime Ekle?</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">Bildirim Al?</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-700">
+              {user.courseSubscriptions.length === 0 ? (
+                <tr>
+                  <td colSpan={3} className="px-4 py-6 text-center text-slate-400 text-sm">Ders aboneliği bulunmuyor.</td>
+                </tr>
+              ) : (
+                user.courseSubscriptions.map((sub: any) => (
+                  <tr key={sub.courseId} className="hover:bg-slate-900/30 transition-colors">
+                    <td className="px-4 py-3 text-sm text-white">{sub.course?.name || '—'}</td>
+                    <td className="px-4 py-3 text-sm">
+                      {sub.addToCalendar ? <span className="text-green-400">✓</span> : <span className="text-slate-500">✗</span>}
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      {sub.notifications ? <span className="text-green-400">✓</span> : <span className="text-slate-500">✗</span>}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="mt-8">
+        <Link href="/admin/users" className="text-sm text-blue-400 hover:text-blue-300 underline">← Tüm kullanıcılara dön</Link>
+      </div>
+    </div>
+  );
+}
