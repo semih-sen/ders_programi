@@ -13,6 +13,8 @@ declare module "next-auth" {
       role: "USER" | "ADMIN";
       isActivated: boolean;
       hasCompletedOnboarding: boolean;
+      isBanned?: boolean;
+      banReason?: string;
     } & DefaultSession["user"];
     accessToken?: string;
     error?: string;
@@ -23,6 +25,8 @@ declare module "next-auth" {
     role?: "USER" | "ADMIN";
     isActivated?: boolean;
     hasCompletedOnboarding?: boolean;
+    isBanned?: boolean;
+    banReason?: string;
   }
 }
 
@@ -32,6 +36,8 @@ declare module "next-auth/jwt" {
     role?: "USER" | "ADMIN";
     isActivated?: boolean;
     hasCompletedOnboarding?: boolean;
+    isBanned?: boolean;
+    banReason?: string;
     accessToken?: string;
     refreshToken?: string;
     accessTokenExpires?: number;

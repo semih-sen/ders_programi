@@ -58,7 +58,7 @@ export const authOptions: NextAuthOptions = {
         // Fetch the full user data including role and isActivated
         const dbUser = await prisma.user.findUnique({
           where: { id: user.id },
-          select: { id: true, role: true, isActivated: true, hasCompletedOnboarding: true }
+          select: { id: true, role: true, isActivated: true, hasCompletedOnboarding: true, isBanned: true, banReason: true }
         });
 
         return {
@@ -70,6 +70,8 @@ export const authOptions: NextAuthOptions = {
           role: dbUser?.role || "USER",
           isActivated: dbUser?.isActivated || false,
           hasCompletedOnboarding: dbUser?.hasCompletedOnboarding || false,
+          isBanned: dbUser?.isBanned || false,
+          banReason: dbUser?.banReason || null,
         };
       }
 
@@ -77,12 +79,14 @@ export const authOptions: NextAuthOptions = {
       if (token.userId) {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.userId as string },
-          select: { role: true, isActivated: true, hasCompletedOnboarding: true },
+          select: { role: true, isActivated: true, hasCompletedOnboarding: true, isBanned: true, banReason: true },
         });
         if (dbUser) {
           token.role = dbUser.role;
           token.isActivated = dbUser.isActivated;
           token.hasCompletedOnboarding = dbUser.hasCompletedOnboarding;
+          token.isBanned = dbUser.isBanned;
+          token.banReason = dbUser.banReason;
         }
       }
 
@@ -105,6 +109,8 @@ export const authOptions: NextAuthOptions = {
         session.user.role = (token.role as "USER" | "ADMIN") || "USER";
         session.user.isActivated = token.isActivated || false;
         session.user.hasCompletedOnboarding = token.hasCompletedOnboarding || false;
+        session.user.isBanned = token.isBanned || false;
+        session.user.banReason = token.banReason || undefined;
         session.accessToken = token.accessToken as string;
         session.error = token.error as string | undefined;
       }

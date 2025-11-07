@@ -13,12 +13,49 @@ async function checkAdmin() {
   return session;
 }
 
-export async function toggleUserBan(userId: string, isBanned: boolean) {
+/**
+ * Kullanıcıyı banlar (yasaklar)
+ * @param formData - userId ve banReason içerir
+ */
+export async function banUser(formData: FormData) {
+  await checkAdmin();
+  
+  const userId = formData.get('userId') as string;
+  const banReason = formData.get('banReason') as string;
+
+  if (!userId) {
+    throw new Error('Kullanıcı ID gerekli');
+  }
+
+  if (!banReason || banReason.trim() === '') {
+    throw new Error('Ban sebebi belirtilmeli');
+  }
+  
+  await prisma.user.update({
+    where: { id: userId },
+    data: { 
+      isBanned: true,
+      banReason: banReason.trim(),
+    },
+  });
+  
+  revalidatePath('/admin/users');
+  return { success: true };
+}
+
+/**
+ * Kullanıcının banını kaldırır
+ * @param userId - Banı kaldırılacak kullanıcının ID'si
+ */
+export async function unbanUser(userId: string) {
   await checkAdmin();
   
   await prisma.user.update({
     where: { id: userId },
-    data: { isBanned: !isBanned },
+    data: { 
+      isBanned: false,
+      banReason: null,
+    },
   });
   
   revalidatePath('/admin/users');

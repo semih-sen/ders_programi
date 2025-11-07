@@ -23,6 +23,14 @@ export default async function DashboardPage() {
 
   const user = session.user;
 
+  // --- YENİ BAN KONTROLÜ (GÖREV 3) - HER ŞEYDEN ÖNCE ---
+  if (user.isBanned) {
+    const reason = user.banReason || "Yönetici tarafından sebep belirtilmedi.";
+    const encodedReason = encodeURIComponent(reason);
+    redirect(`/banned?reason=${encodedReason}`);
+  }
+  // --- BAN KONTROLÜ SONU ---
+
   // STEP 1: If user is NOT activated, show activation form
   if (!user.isActivated) {
     return (
