@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { getRefreshToken } from '@/lib/get-refresh-token';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * Example API route that retrieves the user's refresh token
  * and could pass it to an n8n workflow
