@@ -84,18 +84,30 @@ export async function activateAccount(
 // ---------------------------------------------
 // Test Drive: Trigger n8n Webhook (Server Action)
 // ---------------------------------------------
-export type WebhookState = {
+export type YearlySyncState = {
   success?: boolean;
   message?: string;
 };
 
-export async function triggerTestWebhook(
-  _prevState: WebhookState | undefined,
+export async function triggerYearlySync(
+  _prevState: YearlySyncState | undefined,
   _formData: FormData
-): Promise<WebhookState> {
+): Promise<YearlySyncState> {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return { success: false, message: 'Yetkisiz erişim.' };
+  }
+
+  const userId = session.user.id;
+
+  // Kullanıcının daha önce yıllık senkronizasyon yapıp yapmadığını kontrol et
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { hasYearlySynced: true },
+  });
+
+  if (user?.hasYearlySynced) {
+    return { success: false, message: 'Yıllık senkronizasyon daha önce yapılmış. Tekrar yapılamaz.' };
   }
 
   const { N8N_WEBHOOK_URL, N8N_WEBHOOK_USER, N8N_WEBHOOK_PASS } = process.env;
@@ -112,18 +124,25 @@ export async function triggerTestWebhook(
         Authorization: `Basic ${basicAuth}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ userId: session.user.id, source: 'TestDriveButton' }),
-      // You can add a timeout controller here if desired
+      body: JSON.stringify({ userId, source: 'YearlyCalendarSync' }),
       cache: 'no-store',
     });
 
     if (res.ok) {
-      return { success: true, message: 'Webhook başarıyla tetiklendi!' };
+      // Senkronizasyon başarılı, kullanıcıyı işaretle
+      await prisma.user.update({
+        where: { id: userId },
+        data: { hasYearlySynced: true },
+      });
+
+      revalidatePath('/dashboard');
+      
+      return { success: true, message: 'Yıllık senkronizasyon başarıyla başlatıldı!' };
     }
 
-    return { success: false, message: 'N8N tetiklenirken hata oluştu.' };
+    return { success: false, message: 'Senkronizasyon tetiklenirken hata oluştu.' };
   } catch (err) {
-    console.error('❌ n8n webhook error:', err);
+    console.error('❌ Yearly sync error:', err);
     return { success: false, message: 'Beklenmeyen bir hata oluştu.' };
   }
 }

@@ -34,6 +34,7 @@ model User {
   yemekhaneEklensin     Boolean   @default(false)
   classYear             Int?
   language              Language?
+  hasYearlySynced       Boolean   @default(false)  // Yıllık senkronizasyon yapıldı mı?
   
   // Relation to the license key they used
   activatedKey  LicenseKey?

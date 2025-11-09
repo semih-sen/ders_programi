@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import ActivationForm from './ActivationForm';
 import OnboardingForm from './OnboardingForm';
-import TestDriveForm from './TestDriveForm';
+import YearlySyncForm from './YearlySyncForm';
 import ResetPreferencesButton from './ResetPreferencesButton';
 
 export const metadata = {
@@ -86,6 +86,7 @@ export default async function DashboardPage() {
       yemekhaneEklensin: true,
       classYear: true,
       language: true,
+      hasYearlySynced: true,
       courseSubscriptions: {
         include: {
           course: true,
@@ -256,86 +257,43 @@ export default async function DashboardPage() {
           )}
         </div>
 
-        {/* Main Content - Application Selection */}
+        {/* Main Content - Calendar Sync */}
         <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-8 border border-slate-700">
           <h2 className="text-2xl font-bold text-white mb-6">
-            📅 Ders Programı Yönetimi
+            📅 Google Takvim Senkronizasyonu
           </h2>
           
           <div className="space-y-6">
-            {/* Group Selection */}
-            <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-3">
-                Uygulama Grubunuzu Seçin
-              </label>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'].map((group) => (
-                  <button
-                    key={group}
-                    className="bg-slate-700/50 hover:bg-slate-700 border-2 border-slate-600 hover:border-blue-500 rounded-lg p-4 text-center transition-all duration-200 transform hover:scale-105"
-                  >
-                    <div className="text-3xl font-bold text-white mb-1">{group}</div>
-                    <div className="text-xs text-slate-400">Grup {group}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {/* Calendar Sync Section */}
-            <div className="pt-6 border-t border-slate-700">
-              <h3 className="text-lg font-semibold text-white mb-4">
-                Google Takvim Senkronizasyonu
-              </h3>
-              <div className="flex items-center justify-between bg-slate-900/50 rounded-lg p-4">
-                <div className="flex items-center">
-                  <svg className="w-8 h-8 text-blue-400 mr-3" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/>
-                  </svg>
-                  <div>
-                    <p className="text-white font-medium">Takvim bağlantısı aktif</p>
-                    <p className="text-slate-400 text-sm">{user.email}</p>
-                  </div>
+            <div className="bg-slate-900/50 rounded-lg p-6">
+              <div className="flex items-start gap-4 mb-6">
+                <svg className="w-12 h-12 text-blue-400 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/>
+                </svg>
+                <div className="flex-1">
+                  <p className="text-white font-medium text-lg mb-1">Yıllık Ders Programı Senkronizasyonu</p>
+                  <p className="text-slate-400 text-sm mb-2">
+                    Tüm yıllık ders programınız Google Takvim hesabınıza aktarılacak.
+                  </p>
+                  <p className="text-slate-500 text-xs">
+                    Bağlı hesap: <span className="text-slate-400">{user.email}</span>
+                  </p>
                 </div>
-                <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors">
-                  Senkronize Et
-                </button>
               </div>
-            </div>
 
-            {/* Quick Actions */}
-            <div className="pt-6 border-t border-slate-700">
-              <h3 className="text-lg font-semibold text-white mb-4">
-                Hızlı İşlemler
-              </h3>
-              <div className="grid md:grid-cols-2 gap-4">
-                <button className="flex items-center p-4 bg-slate-700/50 hover:bg-slate-700 rounded-lg transition-colors text-left">
-                  <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center mr-3">
-                    <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-white font-semibold">Ders Ekle</p>
-                    <p className="text-slate-400 text-sm">Manuel ders ekleme</p>
-                  </div>
-                </button>
+              <div className="border-t border-slate-700 pt-6">
+                <div className="mb-4">
+                  <h4 className="text-sm font-semibold text-slate-300 mb-2">
+                    ⚠️ Önemli Bilgi
+                  </h4>
+                  <ul className="text-slate-400 text-sm space-y-1">
+                    <li>• Bu işlem yalnızca <strong className="text-white">bir kez</strong> yapılabilir</li>
+                    <li>• Tüm seçili dersleriniz takvime eklenecek</li>
+                    <li>• İşlem birkaç dakika sürebilir</li>
+                  </ul>
+                </div>
 
-                <button className="flex items-center p-4 bg-slate-700/50 hover:bg-slate-700 rounded-lg transition-colors text-left">
-                  <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center mr-3">
-                    <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-white font-semibold">Program Görüntüle</p>
-                    <p className="text-slate-400 text-sm">Haftalık program</p>
-                  </div>
-                </button>
-              </div>
-              {/* Test Drive Button (n8n webhook) */}
-              <div className="mt-4">
-                <h4 className="text-sm font-semibold text-slate-300 mb-2">Test Sürüşü</h4>
-                <TestDriveForm />
+                <YearlySyncForm hasYearlySynced={userPreferences?.hasYearlySynced || false} />
               </div>
             </div>
           </div>
