@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import { resetYearlySync } from '../actions';
 
 interface UserDetailPageProps {
   params: { id: string };
@@ -76,7 +77,26 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
             <li className="flex justify-between"><span className="text-slate-400">Yemekhane Ekli mi?</span><span className={user.yemekhaneEklensin ? 'text-green-400' : 'text-slate-500'}>{user.yemekhaneEklensin ? 'Evet' : 'Hayır'}</span></li>
             <li className="flex justify-between"><span className="text-slate-400">Sınıf:</span><span className="text-white">{user.classYear ?? '—'}</span></li>
             <li className="flex justify-between"><span className="text-slate-400">Dil:</span><span className="text-white">{user.language ?? '—'}</span></li>
+            <li className="flex justify-between"><span className="text-slate-400">Yıllık Eşitleme Yapıldı:</span><span className={user.hasYearlySynced ? 'text-green-400' : 'text-slate-500'}>{user.hasYearlySynced ? 'Evet' : 'Hayır'}</span></li>
           </ul>
+          <div className="mt-4">
+            <form
+              action={async () => {
+                'use server';
+                await resetYearlySync(user.id);
+              }}
+            >
+              <button
+                type="submit"
+                className="px-4 py-2 rounded-md bg-amber-600 hover:bg-amber-500 text-white text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!user.hasYearlySynced}
+                title={!user.hasYearlySynced ? 'Zaten sıfırlanmış' : 'Kullanıcının yıllık eşitleme durumunu sıfırla'}
+              >
+                Eşitlemeyi Sıfırla
+              </button>
+            </form>
+            <p className="text-xs text-slate-400 mt-2">Bu işlem kullanıcının dashboard'unda "YILLIK TAKVİMİ EŞİTLE" butonunu yeniden görünür yapar.</p>
+          </div>
         </div>
 
         {/* Lisans & Hesap Bilgileri */}

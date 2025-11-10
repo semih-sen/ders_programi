@@ -86,3 +86,26 @@ export async function toggleUserRole(userId: string, currentRole: 'ADMIN' | 'USE
   revalidatePath('/admin/users');
   return { success: true };
 }
+
+/**
+ * Bir kullanıcının yıllık eşitleme durumunu (hasYearlySynced) sıfırlar.
+ * Böylece kullanıcı dashboard'unda yeniden yıllık takvimi eşitleme işlemini başlatabilir.
+ */
+export async function resetYearlySync(userId: string) {
+  await checkAdmin();
+
+  if (!userId) {
+    throw new Error('Kullanıcı ID gerekli');
+  }
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { hasYearlySynced: false },
+  });
+
+  // İlgili kullanıcı detay sayfasını ve dashboard'u yeniden doğrula
+  revalidatePath(`/admin/users/${userId}`);
+  revalidatePath('/dashboard');
+
+  return { success: true, message: 'Yıllık eşitleme durumu sıfırlandı.' };
+}
