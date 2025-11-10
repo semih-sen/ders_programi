@@ -75,6 +75,8 @@ export async function GET(request: NextRequest) {
         const n8nProfile = {
           userId: user.id,
           email: user.email,
+          hasYearlySynced: user.hasYearlySynced,
+          classYear: user.classYear,
           decryptedToken: decryptedToken,
           uygulamaGrubu: user.uygulamaGrubu,
           anatomiGrubu: user.anatomiGrubu,
