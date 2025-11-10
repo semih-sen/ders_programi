@@ -81,7 +81,8 @@ export async function GET(request: NextRequest) {
           uygulamaGrubu: user.uygulamaGrubu,
           anatomiGrubu: user.anatomiGrubu,
           yemekhaneEklensin: user.yemekhaneEklensin,
-          coursePreferences: coursePreferences
+          coursePreferences: coursePreferences,
+          language: user.language
         };
 
         processedUsers.push(n8nProfile);
