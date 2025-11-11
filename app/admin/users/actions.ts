@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { revalidatePath } from 'next/cache';
+import { randomUUID } from 'crypto';
 
 async function checkAdmin() {
   const session = await getServerSession(authOptions);
@@ -108,4 +109,58 @@ export async function resetYearlySync(userId: string) {
   revalidatePath('/dashboard');
 
   return { success: true, message: 'Yıllık eşitleme durumu sıfırlandı.' };
+}
+
+/**
+ * Manuel Kullanıcı Aktifleştirme
+ * - Admin, yüz yüze kayıtlar için kullanıcıyı manuel olarak aktifleştirir
+ * - Yeni bir lisans anahtarı üretir ve kullanıcıya bağlar
+ */
+export async function manuallyActivateUser(userId: string) {
+  await checkAdmin();
+
+  if (!userId) {
+    return { error: 'Kullanıcı ID gerekli.' } as const;
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, isActivated: true },
+  });
+
+  if (!user) {
+    return { error: 'Kullanıcı bulunamadı.' } as const;
+  }
+
+  if (user.isActivated) {
+    return { error: 'Kullanıcı zaten aktif.' } as const;
+  }
+
+  // MAN- prefix ile yeni lisans anahtarı üret
+  const newKeyId = `MAN-${randomUUID().toUpperCase().split('-')[0]}`;
+
+  // Kullanıcıyı aktifleştirme ve lisans anahtarı oluşturmayı atomik işle
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: userId },
+      data: {
+        isActivated: true,
+        // İsteğe bağlı: Kullanıcı -> Lisans ilişkisi mevcutsa buradan bağlanabilir
+        // activatedKey: { connect: { id: newKeyId } },
+      },
+    }),
+    prisma.licenseKey.create({
+      data: {
+        id: newKeyId,
+        isUsed: true,
+        activatedByUserId: userId,
+      },
+    }),
+  ]);
+
+  // List ve detay sayfalarını yeniden doğrula
+  revalidatePath('/admin/users');
+  revalidatePath(`/admin/users/${userId}`);
+
+  return { success: 'Kullanıcı manuel olarak aktifleştirildi.' } as const;
 }

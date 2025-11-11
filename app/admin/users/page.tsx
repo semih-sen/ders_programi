@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
 import { BanButton, DeleteButton, RoleButton } from './UserActions';
 import SearchInput from './SearchInput';
+import { manuallyActivateUser } from './actions';
 
 export const metadata = {
   title: 'Kullanıcı Yönetimi',
@@ -123,6 +124,22 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
                     </td>
                     <td className="px-4 sm:px-6 py-3 sm:py-4">
                       <div className="flex items-center gap-1 sm:gap-2">
+                        {!user.isActivated && (
+                          <form
+                            action={async () => {
+                              'use server';
+                              await manuallyActivateUser(user.id);
+                            }}
+                          >
+                            <button
+                              type="submit"
+                              className="px-2 sm:px-3 py-1 rounded text-xs font-semibold transition-colors bg-green-500/20 text-green-400 hover:bg-green-500/30"
+                              title="Bu kullanıcıyı manuel olarak aktifleştir"
+                            >
+                              Manuel Aktifleştir
+                            </button>
+                          </form>
+                        )}
                         <BanButton userId={user.id} isBanned={user.isBanned} currentBanReason={user.banReason} />
                         <RoleButton userId={user.id} currentRole={user.role} />
                         <DeleteButton userId={user.id} />

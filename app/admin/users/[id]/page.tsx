@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { resetYearlySync } from '../actions';
+import { resetYearlySync, manuallyActivateUser } from '../actions';
 
 interface UserDetailPageProps {
   params: { id: string };
@@ -66,6 +66,25 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
             )}
             <li className="flex justify-between"><span className="text-slate-400">Oluşturulma:</span><span className="text-white">{new Date(user.createdAt).toLocaleString('tr-TR')}</span></li>
           </ul>
+          {!user.isActivated && (
+            <div className="mt-4">
+              <form
+                action={async () => {
+                  'use server';
+                  await manuallyActivateUser(user.id);
+                }}
+              >
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-md bg-green-600 hover:bg-green-500 text-white text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Kullanıcıyı manuel olarak aktifleştir (yüz yüze kayıtlarda kullan)"
+                >
+                  Manuel Aktifleştir
+                </button>
+              </form>
+              <p className="text-xs text-slate-400 mt-2">Bu işlem kullanıcıyı hemen aktifleştirir ve MAN- prefixli lisans anahtarı üretir.</p>
+            </div>
+          )}
         </div>
 
         {/* Onboarding Tercihleri */}

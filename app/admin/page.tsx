@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import DailyRefreshTrigger from './DailyRefreshTrigger';
 
 export const metadata = {
   title: 'Admin Dashboard',
@@ -25,6 +26,11 @@ export default async function AdminDashboard() {
         <StatCard title="Aktif Kullanıcı" value={activatedUsers} icon="✅" color="green" />
         <StatCard title="Toplam Lisans" value={totalKeys} icon="🔑" color="purple" />
         <StatCard title="Kullanılan Lisans" value={usedKeys} icon="🎯" color="orange" />
+      </div>
+
+      {/* Emergency: Manual Daily Refresh Trigger */}
+      <div className="mb-6 sm:mb-8">
+        <DailyRefreshTrigger />
       </div>
 
       <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-4 sm:p-6 border border-slate-700">
