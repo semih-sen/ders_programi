@@ -1,6 +1,7 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
+import { decrypt } from '@/lib/crypto';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { revalidatePath } from 'next/cache';
@@ -65,13 +66,40 @@ export async function unbanUser(userId: string) {
 
 export async function deleteUser(userId: string) {
   await checkAdmin();
-  
-  await prisma.user.delete({
-    where: { id: userId },
-  });
-  
-  revalidatePath('/admin/users');
-  return { success: true };
+  try {
+    // 1. Account kaydını bul
+    const account = await prisma.account.findFirst({ where: { userId: userId } });
+    if (account && account.refresh_token) {
+      // 2. Token'ı deşifre et
+      const decryptedToken = decrypt(account.refresh_token);
+      if (decryptedToken) {
+        // 3. Google revoke endpoint'ine isteği gönder
+        try {
+          const res = await fetch('https://oauth2.googleapis.com/revoke', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `token=${encodeURIComponent(decryptedToken)}`,
+          });
+          if (!res.ok && res.status !== 400) {
+            // 400: token already revoked, hata değildir
+            console.error('Google revoke error:', await res.text());
+          } else if (res.status === 400) {
+            // Token zaten iptal edilmiş olabilir
+            console.log('Google revoke: token already revoked or invalid');
+          }
+        } catch (revokeErr) {
+          console.error('Google revoke fetch error:', revokeErr);
+        }
+      }
+    }
+    // 4. Kullanıcıyı sil
+    await prisma.user.delete({ where: { id: userId } });
+    revalidatePath('/admin/users');
+    return { success: 'Kullanıcı ve Google erişim anahtarı başarıyla silindi.' };
+  } catch (error) {
+    console.error('Kullanıcı silme hatası:', error);
+    return { error: 'Kullanıcı silinirken bir hata oluştu.' };
+  }
 }
 
 export async function toggleUserRole(userId: string, currentRole: 'ADMIN' | 'USER') {

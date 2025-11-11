@@ -41,3 +41,4 @@ next-env.d.ts
 
 # private data files
 /private-data
+MANUAL_DAILY_REFRESH_FEATURE.md
