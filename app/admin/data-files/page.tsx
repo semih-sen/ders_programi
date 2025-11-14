@@ -19,7 +19,7 @@ export default async function DataFilesPage() {
   }
 
   // private-data klasörünü tara
-  const baseDir = path.join('/home/ghrunner/cinnasium-data', 'private-data');
+  const baseDir = path.join('/home/ghrunner/sirkadiyen-data', 'private-data');
   const jsonFiles: Array<{ relativePath: string; fullPath: string; slug: string }> = [];
 
   // Klasör varsa içeriğini oku

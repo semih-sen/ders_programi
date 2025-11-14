@@ -1,8 +1,8 @@
-# Cinnasium Takvimdâr Hizmet Şartları
+# Sirkadiyen Hizmet Şartları
 
 Son Güncelleme: 2 Kasım 2025
 
-Lütfen bu Hizmet Şartları'nı ("Şartlar") dikkatle okuyunuz. Bu Şartlar, "Cinnasium Takvimdâr" ("Hizmet") web sitesini ve bu hizmet aracılığıyla sunulan tüm servisleri kullanımınızı düzenler.
+Lütfen bu Hizmet Şartları'nı ("Şartlar") dikkatle okuyunuz. Bu Şartlar, "Sirkadiyen" ("Hizmet") web sitesini ve bu hizmet aracılığıyla sunulan tüm servisleri kullanımınızı düzenler.
 
 Bu hizmet, İstanbul Tıp Fakültesi Dönem 2 öğrencileri Halil Semih Şen ve Abdullah Ceylan ("Hizmet Sağlayıcıları", "biz") tarafından, fakülte öğrencilerinin ("Kullanıcı", "siz") ders programı takibini kolaylaştırmak amacıyla geliştirilmiş bir araçtır.
 
@@ -10,7 +10,7 @@ Hizmete erişerek veya Hizmeti kullanarak, bu Şartlar'a bağlı kalmayı kabul 
 
 1. Hizmetin Tanımı
 
-Cinnasium Takvimdâr, İstanbul Tıp Fakültesi yönetimi tarafından yayınlanan karmaşık teorik ve uygulama ders programı dosyalarını (CSV, Excel vb.) işleyerek, kişisel Google Takviminize otomatik olarak aktaran bir web uygulamasıdır. Hizmet, belirlediğiniz Uygulama Grubu ve Okul Numarası gibi bilgilere dayanarak programınızı filtreler ve Google OAuth izniniz dahilinde takviminize ekler.
+Sirkadiyen, İstanbul Tıp Fakültesi yönetimi tarafından yayınlanan karmaşık teorik ve uygulama ders programı dosyalarını (CSV, Excel vb.) işleyerek, kişisel Google Takviminize otomatik olarak aktaran bir web uygulamasıdır. Hizmet, belirlediğiniz Uygulama Grubu ve Okul Numarası gibi bilgilere dayanarak programınızı filtreler ve Google OAuth izniniz dahilinde takviminize ekler.
 
 2. Kullanıcı Yükümlülükleri
 
@@ -32,13 +32,13 @@ Verilerinizin gizliliği bizim için esastır. Hangi verileri neden topladığı
 
 4. Sorumluluk Reddi (En Önemli Bölüm)
 
-Cinnasium Takvimdâr, iyi niyetle ve öğrencilere yardımcı olmak amacıyla geliştirilmiştir. Ancak, bu Hizmet size "OLDUĞU GİBİ" (AS IS) ve "MEVCUT OLDUĞU KADARIYLA" (AS AVAILABLE) sunulmaktadır.
+Sirkadiyen, iyi niyetle ve öğrencilere yardımcı olmak amacıyla geliştirilmiştir. Ancak, bu Hizmet size "OLDUĞU GİBİ" (AS IS) ve "MEVCUT OLDUĞU KADARIYLA" (AS AVAILABLE) sunulmaktadır.
 
     Veri Kaynağı: Hizmetimiz, verilerini doğrudan fakülte yönetiminin yayınladığı program dosyalarından alır. Bu kaynak dosyalardaki (tarih, saat, yer, hoca bilgisi) hatalardan veya son dakika değişikliklerinden Hizmet Sağlayıcıları sorumlu tutulamaz.
 
     Hizmet Garantisi: Hizmetin kesintisiz, hatasız veya güvenli olacağını garanti etmeyiz. Google API'lerinde, sunucularımızda veya kaynak program dosyasında meydana gelebilecek teknik aksaklıklar nedeniyle hizmet geçici olarak durabilir.
 
-    Nihai Sorumluluk: Cinnasium Takvimdâr, ders takibinizi kolaylaştıran bir yardımcı araçtır. Bir dersi, sınavı veya uygulamayı kaçırmanız da dahil olmak üzere, programın takibinden doğabilecek herhangi bir akademik veya kişisel zarardan Hizmet Sağlayıcıları sorumlu değildir. Ders programınızı fakültenin resmi kaynaklarından teyit etme sorumluluğu nihai olarak Kullanıcı'ya aittir.
+    Nihai Sorumluluk: Sirkadiyen, ders takibinizi kolaylaştıran bir yardımcı araçtır. Bir dersi, sınavı veya uygulamayı kaçırmanız da dahil olmak üzere, programın takibinden doğabilecek herhangi bir akademik veya kişisel zarardan Hizmet Sağlayıcıları sorumlu değildir. Ders programınızı fakültenin resmi kaynaklarından teyit etme sorumluluğu nihai olarak Kullanıcı'ya aittir.
 
 5. Hizmetin Değiştirilmesi ve Sonlandırılması
 
@@ -48,4 +48,4 @@ Bu Şartlar'ın ihlali durumunda, Kullanıcı'nın Hizmet'e erişimini derhal as
 
 6. İletişim
 
-Bu Hizmet Şartları ile ilgili sorularınız veya geri bildirimleriniz için bizimle destek@cinnasium.com adresi üzerinden iletişime geçebilirsiniz.
+Bu Hizmet Şartları ile ilgili sorularınız veya geri bildirimleriniz için bizimle destek@sirkadiyen.com adresi üzerinden iletişime geçebilirsiniz.

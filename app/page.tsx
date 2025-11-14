@@ -1,6 +1,7 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from './api/auth/[...nextauth]/options';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default async function Home() {
   const session = await getServerSession(authOptions);
@@ -11,8 +12,15 @@ export default async function Home() {
         <div className="flex flex-col items-center justify-center text-center space-y-8 max-w-4xl mx-auto">
           {/* Logo/Brand */}
           <div className="space-y-4">
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white text-3xl font-bold shadow-lg">
-              CT
+            <div className="flex justify-center mb-6">
+              <Image 
+                src="/sirkadiyen-logo.png" 
+                alt="Sirkadiyen Logo" 
+                width={160} 
+                height={160}
+                className="drop-shadow-2xl"
+                priority
+              />
             </div>
             <h1 className="text-5xl md:text-6xl font-extrabold text-white leading-tight">
               Ders Programın, Sen Uğraşma,{' '}
@@ -24,7 +32,7 @@ export default async function Home() {
 
           {/* Subtitle */}
           <p className="text-xl md:text-2xl text-slate-300 leading-relaxed max-w-3xl">
-            Cinnasium Takvimdâr, İstanbul Tıp Fakültesi'nin karmaşık ders programını saniyeler içinde Google Takviminize işler.
+            Sirkadiyen, İstanbul Tıp Fakültesi'nin karmaşık ders programını saniyeler içinde Google Takviminize işler.
           </p>
 
           {/* CTA Button */}

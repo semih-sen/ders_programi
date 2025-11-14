@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 5. Depolama klasör yapısını oluştur
-    const baseDir = path.join('/home/ghrunner/cinnasium-data', 'private-data');
+    const baseDir = path.join('/home/ghrunner/sirkadiyen-data', 'private-data');
     const gradeDir = path.join(baseDir, `donem-${grade}`);
     
     // Klasörler yoksa oluştur

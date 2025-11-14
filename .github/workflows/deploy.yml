@@ -1,4 +1,4 @@
-name: Deploy to Cinnasium Server
+name: Deploy to Sirkadiyen Server
 
 # Sadece 'main' branch'ine (ana dala) push yapıldığında tetiklensin
 on:
@@ -51,7 +51,7 @@ jobs:
         run: npm run build
         working-directory: /home/ghrunner/ders_programi/ders_programi
       - name: 8. Projeyi Yeniden Başlat
-        run: /home/ghrunner/.nvm/versions/node/v25.1.0/bin/pm2 restart cinnasium
+        run: /home/ghrunner/.nvm/versions/node/v25.1.0/bin/pm2 restart sirkadiyen
         working-directory: /home/ghrunner/ders_programi/ders_programi
 
       

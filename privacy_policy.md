@@ -1,8 +1,8 @@
-# Cinnasium Takvimdâr Gizlilik Politikası
+# Sirkadiyen Gizlilik Politikası
 
 > Son Güncelleme: 1 Kasım 2025
 
-Biz, Halil Semih Şen ve Abdullah Ceylan (İstanbul Tıp Fakültesi Dönem 2 öğrencileri), Cinnasium Takvimdâr hizmetini ("Hizmet") sizlere sunarken gizliliğinize ne kadar önem verdiğimizi açıkça belirtmek isteriz.
+Biz, Halil Semih Şen ve Abdullah Ceylan (İstanbul Tıp Fakültesi Dönem 2 öğrencileri), Sirkadiyen hizmetini ("Hizmet") sizlere sunarken gizliliğinize ne kadar önem verdiğimizi açıkça belirtmek isteriz.
 
 Bizim felsefemiz nettir: Sizin verilerinizde gözümüz yok. Bu hizmet, tamamen tıp fakültesi öğrencilerinin yaşadığı karmaşık ders programı sorununu çözmek için geliştirilmiş bir araçtır. Hiçbir verinizi, hizmetin çalışması için gereken teknik zorunluluklar dışında işlemeyecek, analiz etmeyecek veya paylaşmayacağız.
 
@@ -46,7 +46,7 @@ Topladığımız bu minimum bilgiyi (Google refresh_token, okul no, grup bilgisi
 
 4. Hizmetin Sona Ermesi
 
-Hizmeti kullanmayı bırakmak isterseniz, https://myaccount.google.com/permissions adresinden "Cinnasium Takvimdâr" uygulamasına verdiğiniz izni kaldırmanız yeterlidir. İzni kaldırdığınız anda sistemimiz artık takviminize erişemez ve otomasyon durur. Talebiniz üzerine tüm verilerinizi sistemimizden kalıcı olarak silebiliriz.
+Hizmeti kullanmayı bırakmak isterseniz, https://myaccount.google.com/permissions adresinden "Sirkadiyen" uygulamasına verdiğiniz izni kaldırmanız yeterlidir. İzni kaldırdığınız anda sistemimiz artık takviminize erişemez ve otomasyon durur. Talebiniz üzerine tüm verilerinizi sistemimizden kalıcı olarak silebiliriz.
 
 5. İletişim
 
@@ -54,4 +54,4 @@ Bu gizlilik politikasıyla ilgili herhangi bir sorunuz veya endişeniz olursa, b
 
     Proje Sahipleri: Halil Semih Şen & Abdullah Ceylan
 
-    E-posta: destek@cinnasium.com (veya buraya istediğiniz bir mail adresini ekleyebilirsiniz)
+    E-posta: destek@sirkadiyen.com

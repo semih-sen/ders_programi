@@ -7,7 +7,7 @@ export default function Footer() {
         <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
           {/* Copyright */}
           <div className="text-slate-400 text-sm text-center md:text-left">
-            © 2025 Cinnasium Takvimdâr. Halil Semih Şen & Abdullah Ceylan.
+            © 2025 Sirkadiyen. Halil Semih Şen & Abdullah Ceylan.
           </div>
 
           {/* Legal Links */}

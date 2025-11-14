@@ -4,8 +4,8 @@ import ReactMarkdown from 'react-markdown';
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Gizlilik Politikası - Cinnasium Takvimdâr',
-  description: 'Cinnasium Takvimdâr gizlilik politikası ve kişisel veri koruma uygulamaları.',
+  title: 'Gizlilik Politikası - Sirkadiyen',
+  description: 'Sirkadiyen gizlilik politikası ve kişisel veri koruma uygulamaları.',
 };
 
 export default function PrivacyPage() {

@@ -2,7 +2,7 @@ import './globals.css'
 import Footer from './components/Footer'
 
 export const metadata = {
-  title: 'Cinnasium Takvimdâr',
+  title: 'Sirkadiyen',
   description: 'İstanbul Tıp Fakültesi ders programınızı otomatik olarak Google Takviminize aktarın.',
 }
 

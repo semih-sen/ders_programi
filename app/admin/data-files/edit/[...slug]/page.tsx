@@ -22,7 +22,7 @@ export default async function EditDataFilePage({ params }: PageProps) {
 
   // Slug'dan dosya yolunu oluştur
   const fileSlug = params.slug.join('/');
-  const filePath = path.join('/home/ghrunner/cinnasium-data', 'private-data', `${fileSlug}.json`);
+  const filePath = path.join('/home/ghrunner/sirkadiyen-data', 'private-data', `${fileSlug}.json`);
 
   // Dosya var mı kontrol et
   if (!fs.existsSync(filePath)) {

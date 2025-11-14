@@ -21,7 +21,7 @@ export async function deleteEntry(filePath: string, entryId: string) {
     }
 
     // Dosya yolunu oluştur
-    const fullPath = path.join('/home/ghrunner/cinnasium-data', 'private-data', `${filePath}.json`);
+    const fullPath = path.join('/home/ghrunner/sirkadiyen-data', 'private-data', `${filePath}.json`);
 
     // Dosya var mı kontrol et
     if (!fs.existsSync(fullPath)) {
@@ -78,7 +78,7 @@ export async function updateEntry(
     }
 
     // Dosya yolunu oluştur
-    const fullPath = path.join('/home/ghrunner/cinnasium-data', 'private-data', `${filePath}.json`);
+    const fullPath = path.join('/home/ghrunner/sirkadiyen-data', 'private-data', `${filePath}.json`);
 
     // Dosya var mı kontrol et
     if (!fs.existsSync(fullPath)) {
@@ -139,7 +139,7 @@ export async function createEntry(
     }
 
     // Dosya yolunu oluştur
-    const fullPath = path.join('/home/ghrunner/cinnasium-data', 'private-data', `${filePath}.json`);
+    const fullPath = path.join('/home/ghrunner/sirkadiyen-data', 'private-data', `${filePath}.json`);
 
     // Dosya var mı kontrol et
     if (!fs.existsSync(fullPath)) {

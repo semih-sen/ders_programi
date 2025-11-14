@@ -4,8 +4,8 @@ import ReactMarkdown from 'react-markdown';
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Hizmet Şartları - Cinnasium Takvimdâr',
-  description: 'Cinnasium Takvimdâr kullanım şartları ve koşulları.',
+  title: 'Hizmet Şartları - Sirkadiyen',
+  description: 'Sirkadiyen kullanım şartları ve koşulları.',
 };
 
 export default function TermsPage() {

@@ -95,7 +95,7 @@ export default function BannedMessage() {
         {/* Footer Note */}
         <div className="mt-8 text-center text-sm text-slate-500">
           <p>Hesap ID'niz: Gizli</p>
-          <p className="mt-1">Yardım için: admin@cinnasium.com</p>
+          <p className="mt-1">Yardım için: admin@sirkadiyen.com</p>
         </div>
       </div>
     </main>

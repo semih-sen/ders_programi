@@ -8,7 +8,7 @@ import YearlySyncForm from './YearlySyncForm';
 import ResetPreferencesButton from './ResetPreferencesButton';
 
 export const metadata = {
-  title: 'Dashboard - Cinnasium Takvimdâr',
+  title: 'Dashboard - Sirkadiyen',
   description: 'Kullanıcı kontrol paneli',
 };
 
