@@ -4,6 +4,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import { encrypt } from "@/lib/crypto";
 import type { Adapter } from "next-auth/adapters";
+import { tr } from "zod/locales";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as Adapter,
@@ -12,7 +13,7 @@ export const authOptions: NextAuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      
+      allowDangerousEmailAccountLinking:true,
       authorization: {
         params: {
           // Request offline access to get refresh token
