@@ -52,6 +52,47 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
         <p className="text-slate-400">{user.name || 'İsimsiz'} • {user.email}</p>
       </div>
 
+      {/* Admin Notları Bölümü */}
+      <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30 rounded-xl p-6 mb-8">
+        <div className="flex items-start gap-3 mb-4">
+          <svg className="w-6 h-6 text-amber-400 flex-shrink-0 mt-1" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+          </svg>
+          <div className="flex-1">
+            <h2 className="text-lg font-semibold text-white mb-2">Admin Notları</h2>
+            <p className="text-slate-400 text-sm mb-4">Bu alana kullanıcı hakkında özel durumlar, ek bilgiler ve hatırlatmalar ekleyebilirsiniz.</p>
+            <form
+              action={async (formData: FormData) => {
+                'use server';
+                const { updateAdminNotes } = await import('../actions');
+                const notes = formData.get('notes') as string;
+                await updateAdminNotes(user.id, notes);
+              }}
+            >
+              <textarea
+                name="notes"
+                defaultValue={user.adminNotes || ''}
+                rows={4}
+                className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 resize-none"
+                placeholder="Örn: Yüz yüze kayıt yapıldı. Özel ders tercihlerinde değişiklik yapıldı..."
+              />
+              <div className="flex items-center justify-between mt-3">
+                <p className="text-xs text-slate-500">Bu notlar sadece adminler tarafından görülebilir</p>
+                <button
+                  type="submit"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl text-sm"
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  Notları Kaydet
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
       <div className="grid gap-6 lg:grid-cols-3 mb-8">
         {/* Temel Bilgiler */}
         <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">

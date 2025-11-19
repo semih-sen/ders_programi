@@ -192,3 +192,28 @@ export async function manuallyActivateUser(userId: string) {
 
   return { success: 'Kullanıcı manuel olarak aktifleştirildi.' } as const;
 }
+
+/**
+ * Kullanıcı için admin notunu günceller
+ * @param userId - Kullanıcı ID
+ * @param notes - Admin notları
+ */
+export async function updateAdminNotes(userId: string, notes: string) {
+  await checkAdmin();
+
+  if (!userId) {
+    throw new Error('Kullanıcı ID gerekli');
+  }
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { 
+      adminNotes: notes.trim() === '' ? null : notes.trim(),
+    },
+  });
+
+  revalidatePath(`/admin/users/${userId}`);
+  revalidatePath('/admin/users');
+  
+  return { success: true };
+}

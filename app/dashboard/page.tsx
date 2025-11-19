@@ -6,6 +6,7 @@ import ActivationForm from './ActivationForm';
 import OnboardingForm from './OnboardingForm';
 import YearlySyncForm from './YearlySyncForm';
 import ResetPreferencesButton from './ResetPreferencesButton';
+import PermissionWarning from './PermissionWarning';
 
 export const metadata = {
   title: 'Dashboard - Sirkadiyen',
@@ -61,6 +62,29 @@ export default async function DashboardPage() {
               Oturum açan: <span className="ml-1 text-white font-medium">{user.email}</span>
             </div>
           </div>
+
+          {/* Contact Info */}
+          <div className="mt-4 bg-blue-500/10 rounded-lg p-4 border border-blue-500/30">
+            <div className="flex items-start gap-3">
+              <svg className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+              </svg>
+              <div className="flex-1">
+                <p className="text-slate-300 text-sm leading-relaxed mb-2">
+                  Aktivasyon kodu sorunu mu yaşıyorsunuz? Yardım için bizimle iletişime geçin.
+                </p>
+                <a 
+                  href="/iletisim"
+                  className="inline-flex items-center gap-1 text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+                  </svg>
+                  İletişim Bilgilerimiz
+                </a>
+              </div>
+            </div>
+          </div>
         </div>
       </main>
     );
@@ -80,6 +104,9 @@ export default async function DashboardPage() {
   // Fetch user's preferences and subscriptions
   const userPreferences = await prisma.user.findUnique({
     where: { id: user.id },
+    include: {
+      accounts: true,
+    },
     select: {
       uygulamaGrubu: true,
       anatomiGrubu: true,
@@ -87,6 +114,7 @@ export default async function DashboardPage() {
       classYear: true,
       language: true,
       hasYearlySynced: true,
+      accounts: true,
       courseSubscriptions: {
         include: {
           course: true,
@@ -99,9 +127,16 @@ export default async function DashboardPage() {
   const calendarCourses = subscribedCourses.filter((sub: any) => sub.addToCalendar);
   const notificationCourses = subscribedCourses.filter((sub: any) => sub.notifications);
 
+  // Takvim izni kontrolü
+  const scope = userPreferences?.accounts?.[0]?.scope || "";
+  const hasCalendarPermission = scope.includes("calendar.events.owned") || scope.includes("calendar");
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 py-8 sm:py-12">
       <div className="container mx-auto px-4 max-w-6xl">
+        {/* Takvim İzni Uyarısı */}
+        <PermissionWarning hasCalendarPermission={hasCalendarPermission} />
+
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">

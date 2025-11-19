@@ -26,6 +26,7 @@ model User {
   isActivated   Boolean   @default(false)
   isBanned      Boolean   @default(false)
   banReason     String?   // Banlanma sebebini tutacak opsiyonel metin alanı
+  adminNotes    String?   @db.Text // Admin notları - özel durumlar, ek bilgiler vb.
   
   // Onboarding & Preferences
   hasCompletedOnboarding Boolean   @default(false)
