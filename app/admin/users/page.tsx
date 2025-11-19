@@ -25,9 +25,6 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
       ],
     } : undefined,
     orderBy: { createdAt: 'desc' },
-    include: {
-      accounts: true,
-    },
     select: {
       id: true,
       name: true,
@@ -37,8 +34,12 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
       isBanned: true,
       banReason: true,
       createdAt: true,
-      accounts: true,
       adminNotes: true,
+      accounts: {
+        select: {
+          scope: true,
+        },
+      },
     },
   });
 
