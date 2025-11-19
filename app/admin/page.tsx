@@ -35,9 +35,13 @@ export default async function AdminDashboard() {
 
       <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-4 sm:p-6 border border-slate-700">
         <h2 className="text-lg sm:text-xl font-semibold text-white mb-4">Hızlı İşlemler</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-          <QuickLink href="/admin/users" title="Kullanıcı Yönetimi" description="Kullanıcıları görüntüle ve yönet" color="blue" />
-          <QuickLink href="/admin/licenses" title="Lisans Yönetimi" description="Lisans anahtarlarını yönet" color="purple" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+          <QuickLink href="/admin/users" title="Kullanıcı Yönetimi" description="Kullanıcıları görüntüle ve yönet" icon="users" color="blue" />
+          <QuickLink href="/admin/licenses" title="Lisans Yönetimi" description="Lisans anahtarlarını yönet" icon="key" color="purple" />
+          <QuickLink href="/admin/finance" title="Finans Yönetimi" description="Gelir, gider ve kasa takibi" icon="finance" color="green" />
+          <QuickLink href="/admin/finance/accounts" title="Kasa Yönetimi" description="Kasa ve hesap ekle/düzenle" icon="wallet" color="orange" />
+          <QuickLink href="/admin/data-files" title="Veri Dosyaları" description="JSON dosyalarını yönet" icon="file" color="cyan" />
+          <QuickLink href="/admin/audit" title="Denetim Günlüğü" description="Sistem aktivitelerini görüntüle" icon="audit" color="red" />
         </div>
       </div>
     </div>
@@ -62,22 +66,40 @@ function StatCard({ title, value, icon, color }: { title: string; value: number;
   );
 }
 
-function QuickLink({ href, title, description, color }: { href: string; title: string; description: string; color: string }) {
+function QuickLink({ href, title, description, icon, color }: { href: string; title: string; description: string; icon: string; color: string }) {
+  const colorClasses = {
+    blue: { bg: 'bg-blue-500/20', text: 'text-blue-400', hover: 'group-hover:bg-blue-500/30' },
+    purple: { bg: 'bg-purple-500/20', text: 'text-purple-400', hover: 'group-hover:bg-purple-500/30' },
+    green: { bg: 'bg-green-500/20', text: 'text-green-400', hover: 'group-hover:bg-green-500/30' },
+    orange: { bg: 'bg-orange-500/20', text: 'text-orange-400', hover: 'group-hover:bg-orange-500/30' },
+    cyan: { bg: 'bg-cyan-500/20', text: 'text-cyan-400', hover: 'group-hover:bg-cyan-500/30' },
+    red: { bg: 'bg-red-500/20', text: 'text-red-400', hover: 'group-hover:bg-red-500/30' },
+  };
+  const c = colorClasses[color as keyof typeof colorClasses];
+  
+  const icons = {
+    users: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />,
+    key: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />,
+    finance: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />,
+    wallet: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />,
+    file: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />,
+    audit: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />,
+  };
+  
   return (
-    <a href={href} className="flex items-center p-3 sm:p-4 bg-slate-700/50 hover:bg-slate-700 rounded-lg transition-colors group">
-      <div className={`w-10 h-10 sm:w-12 sm:h-12 ${color === 'blue' ? 'bg-blue-500/20' : 'bg-purple-500/20'} rounded-lg flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0`}>
-        <svg className={`w-5 h-5 sm:w-6 sm:h-6 ${color === 'blue' ? 'text-blue-400' : 'text-purple-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          {color === 'blue' ? (
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-          ) : (
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-          )}
+    <a href={href} className="flex items-center p-4 sm:p-5 bg-slate-700/50 hover:bg-slate-700 rounded-xl transition-all group border border-slate-600/50 hover:border-slate-500/50 hover:shadow-lg">
+      <div className={`w-12 h-12 sm:w-14 sm:h-14 ${c.bg} ${c.hover} rounded-xl flex items-center justify-center mr-4 flex-shrink-0 transition-all`}>
+        <svg className={`w-6 h-6 sm:w-7 sm:h-7 ${c.text}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          {icons[icon as keyof typeof icons]}
         </svg>
       </div>
-      <div className="min-w-0">
-        <p className="text-white font-semibold text-sm sm:text-base truncate">{title}</p>
+      <div className="min-w-0 flex-1">
+        <p className="text-white font-semibold text-base sm:text-lg truncate mb-1">{title}</p>
         <p className="text-slate-400 text-xs sm:text-sm truncate">{description}</p>
       </div>
+      <svg className="w-5 h-5 text-slate-500 group-hover:text-slate-400 transition-colors ml-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+      </svg>
     </a>
   );
 }

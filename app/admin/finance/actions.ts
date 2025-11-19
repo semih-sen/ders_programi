@@ -97,6 +97,75 @@ export async function addTransaction(data: AddTransactionData) {
 }
 
 /**
+ * Finansal işlemi günceller
+ */
+export async function updateTransaction(id: string, data: Partial<AddTransactionData>) {
+  await checkAdmin();
+
+  try {
+    const { amount, type, category, description, userId, accountId } = data;
+
+    // Mevcut işlemi getir
+    const existingTransaction = await prisma.transaction.findUnique({
+      where: { id },
+      include: { account: true },
+    });
+
+    if (!existingTransaction) {
+      return { error: 'İşlem bulunamadı.' };
+    }
+
+    // Eğer tutar veya hesap değişiyorsa bakiye güncellemesi gerekir
+    const amountChanged = amount !== undefined && amount !== existingTransaction.amount;
+    const accountChanged = accountId !== undefined && accountId !== existingTransaction.accountId;
+
+    await prisma.$transaction(async (tx: any) => {
+      // Eski bakiyeyi geri al
+      if (amountChanged || accountChanged) {
+        const oldSign = existingTransaction.type === 'INCOME' ? -1 : 1;
+        await tx.financialAccount.update({
+          where: { id: existingTransaction.accountId },
+          data: { balance: { increment: oldSign * existingTransaction.amount } },
+        });
+      }
+
+      // Transaction'ı güncelle
+      await tx.transaction.update({
+        where: { id },
+        data: {
+          ...(amount !== undefined && { amount }),
+          ...(type !== undefined && { type: type as any }),
+          ...(category !== undefined && { category: category.trim() }),
+          ...(description !== undefined && { description: description?.trim() || null }),
+          ...(userId !== undefined && { userId: userId || null }),
+          ...(accountId !== undefined && { accountId }),
+        },
+      });
+
+      // Yeni bakiyeyi uygula
+      if (amountChanged || accountChanged) {
+        const newAmount = amount ?? existingTransaction.amount;
+        const newType = type ?? existingTransaction.type;
+        const newAccountId = accountId ?? existingTransaction.accountId;
+        const newSign = newType === 'INCOME' ? 1 : -1;
+        
+        await tx.financialAccount.update({
+          where: { id: newAccountId },
+          data: { balance: { increment: newSign * newAmount } },
+        });
+      }
+    });
+
+    await logAdminAction('TRANSACTION_UPDATED', `İşlem güncellendi: ${category || existingTransaction.category}`, id);
+    revalidatePath('/admin/finance');
+    return { success: 'İşlem başarıyla güncellendi.' };
+  } catch (error) {
+    console.error('İşlem güncelleme hatası:', error);
+    return { error: 'İşlem güncellenirken bir hata oluştu.' };
+  }
+}
+
+/**
  * Finansal işlemi siler
  */
 export async function deleteTransaction(id: string) {

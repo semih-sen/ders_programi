@@ -1,7 +1,7 @@
  'use client';
 
 import { useState, useEffect } from 'react';
-import { addTransaction, deleteTransaction, searchUsers, transferFunds } from './actions';
+import { addTransaction, updateTransaction, deleteTransaction, searchUsers, transferFunds } from './actions';
 import { useRouter } from 'next/navigation';
 
 interface Transaction {
@@ -38,6 +38,7 @@ export default function FinancePage({ stats }: { stats: FinancialStats }) {
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [isDistribution, setIsDistribution] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const router = useRouter();
 
   // Form state
@@ -76,14 +77,28 @@ export default function FinancePage({ stats }: { stats: FinancialStats }) {
     e.preventDefault();
     setIsLoading(true);
 
-    const result = await addTransaction({
-      amount: parseFloat(amount),
-      type: isDistribution ? 'DISTRIBUTION' : type,
-      category,
-      description: description || undefined,
-      accountId,
-      userId: selectedUserId || undefined,
-    });
+    let result;
+    if (editingTransaction) {
+      // Güncelleme
+      result = await updateTransaction(editingTransaction.id, {
+        amount: parseFloat(amount),
+        type: isDistribution ? 'DISTRIBUTION' : type,
+        category,
+        description: description || undefined,
+        accountId,
+        userId: selectedUserId || undefined,
+      });
+    } else {
+      // Yeni ekleme
+      result = await addTransaction({
+        amount: parseFloat(amount),
+        type: isDistribution ? 'DISTRIBUTION' : type,
+        category,
+        description: description || undefined,
+        accountId,
+        userId: selectedUserId || undefined,
+      });
+    }
 
     setIsLoading(false);
 
@@ -97,10 +112,26 @@ export default function FinancePage({ stats }: { stats: FinancialStats }) {
       setSelectedUserId('');
       setUserSearchQuery('');
       setIsDistribution(false);
+      setEditingTransaction(null);
       router.refresh();
     } else {
       alert(result.error);
     }
+  };
+
+  const handleEdit = (transaction: Transaction) => {
+    setEditingTransaction(transaction);
+    setAmount(transaction.amount.toString());
+    setType(transaction.type === 'DISTRIBUTION' ? 'EXPENSE' : transaction.type as 'INCOME' | 'EXPENSE');
+    setIsDistribution(transaction.type === 'DISTRIBUTION');
+    setCategory(transaction.category);
+    setDescription(transaction.description || '');
+    setAccountId(transaction.account.id);
+    setSelectedUserId(transaction.userId || '');
+    if (transaction.user) {
+      setUserSearchQuery(transaction.user.name || transaction.user.email || '');
+    }
+    setIsModalOpen(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -292,12 +323,22 @@ export default function FinancePage({ stats }: { stats: FinancialStats }) {
                       ₺{transaction.amount.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
                     </td>
                     <td className="px-4 sm:px-6 py-3 text-center">
-                      <button
-                        onClick={() => handleDelete(transaction.id)}
-                        className="px-3 py-1 bg-red-500/20 text-red-400 rounded hover:bg-red-500/30 text-xs font-semibold transition-colors"
-                      >
-                        Sil
-                      </button>
+                      <div className="flex gap-2 justify-center">
+                        <button
+                          onClick={() => handleEdit(transaction)}
+                          className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded hover:bg-blue-500/30 text-xs font-semibold transition-colors"
+                          title="Düzenle"
+                        >
+                          ✏️ Düzenle
+                        </button>
+                        <button
+                          onClick={() => handleDelete(transaction.id)}
+                          className="px-3 py-1 bg-red-500/20 text-red-400 rounded hover:bg-red-500/30 text-xs font-semibold transition-colors"
+                          title="Sil"
+                        >
+                          🗑️ Sil
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -312,9 +353,19 @@ export default function FinancePage({ stats }: { stats: FinancialStats }) {
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-slate-800 rounded-xl border border-slate-700 w-full max-w-md max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-slate-700 flex justify-between items-center sticky top-0 bg-slate-800 z-10">
-              <h2 className="text-xl font-bold text-white">{isDistribution ? 'Kâr Dağıtımı Ekle' : 'Yeni İşlem Ekle'}</h2>
+              <h2 className="text-xl font-bold text-white">
+                {editingTransaction 
+                  ? '✏️ İşlemi Düzenle' 
+                  : isDistribution 
+                    ? 'Kâr Dağıtımı Ekle' 
+                    : 'Yeni İşlem Ekle'
+                }
+              </h2>
               <button
-                onClick={() => setIsModalOpen(false)}
+                onClick={() => { 
+                  setIsModalOpen(false); 
+                  setEditingTransaction(null); 
+                }}
                 className="text-slate-400 hover:text-white transition-colors"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -484,7 +535,10 @@ export default function FinancePage({ stats }: { stats: FinancialStats }) {
               <div className="flex gap-3 pt-4">
                 <button
                   type="button"
-                  onClick={() => setIsModalOpen(false)}
+                  onClick={() => { 
+                    setIsModalOpen(false); 
+                    setEditingTransaction(null); 
+                  }}
                   className="flex-1 px-4 py-2 bg-slate-700 text-white rounded-lg font-semibold hover:bg-slate-600 transition-colors"
                   disabled={isLoading}
                 >
@@ -495,7 +549,10 @@ export default function FinancePage({ stats }: { stats: FinancialStats }) {
                   className="flex-1 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg font-semibold hover:from-green-600 hover:to-emerald-700 transition-all disabled:opacity-50"
                   disabled={isLoading}
                 >
-                  {isLoading ? 'Ekleniyor...' : 'Kaydet'}
+                  {isLoading 
+                    ? (editingTransaction ? 'Güncelleniyor...' : 'Ekleniyor...') 
+                    : (editingTransaction ? '💾 Güncelle' : '➕ Kaydet')
+                  }
                 </button>
               </div>
             </form>
