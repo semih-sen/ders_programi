@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
-import { BanButton, DeleteButton, RoleButton } from './UserActions';
+import { BanButton, DeleteButton, RoleButton, PaymentStatusButton } from './UserActions';
 import SearchInput from './SearchInput';
 import { manuallyActivateUser } from './actions';
 
@@ -35,6 +35,7 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
       banReason: true,
       createdAt: true,
       adminNotes: true,
+      paymentStatus: true,
       accounts: {
         select: {
           scope: true,
@@ -79,6 +80,7 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
                 <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-slate-400 uppercase">Email</th>
                 <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-slate-400 uppercase">Rol</th>
                 <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-slate-400 uppercase">Aktif Mi?</th>
+                <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-slate-400 uppercase">Ödeme Durumu</th>
                 <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-slate-400 uppercase">Yasaklı Mı?</th>
                 <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-slate-400 uppercase">Takvim İzni</th>
                 <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-slate-400 uppercase">Eylemler</th>
@@ -87,7 +89,7 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
             <tbody className="divide-y divide-slate-700">
               {users.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 sm:px-6 py-12 text-center">
+                  <td colSpan={8} className="px-4 sm:px-6 py-12 text-center">
                     <div className="flex flex-col items-center justify-center">
                       <svg className="w-12 h-12 text-slate-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
@@ -138,6 +140,17 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
                         {user.isActivated ? <span className="text-green-400">✓</span> : <span className="text-slate-500">✗</span>}
                       </td>
                       <td className="px-4 sm:px-6 py-3 sm:py-4">
+                        <span className={`px-2 sm:px-3 py-1 rounded-full text-xs font-semibold ${
+                          user.paymentStatus === 'PAID' 
+                            ? 'bg-green-500/20 text-green-400' 
+                            : user.paymentStatus === 'FREE'
+                            ? 'bg-blue-500/20 text-blue-400'
+                            : 'bg-slate-600/50 text-slate-300'
+                        }`}>
+                          {user.paymentStatus === 'PAID' ? '✓ Ödendi' : user.paymentStatus === 'FREE' ? '🎁 Ücretsiz' : '⏳ Ödenmedi'}
+                        </span>
+                      </td>
+                      <td className="px-4 sm:px-6 py-3 sm:py-4">
                         {user.isBanned ? (
                           <span className="text-red-400 font-semibold" title={user.banReason || 'Sebep belirtilmemiş'}>
                             Evet
@@ -181,6 +194,7 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
                               </button>
                             </form>
                           )}
+                          <PaymentStatusButton userId={user.id} currentStatus={user.paymentStatus} />
                           <BanButton userId={user.id} isBanned={user.isBanned} currentBanReason={user.banReason} />
                           <RoleButton userId={user.id} currentRole={user.role} />
                           <DeleteButton userId={user.id} />

@@ -42,6 +42,15 @@ model User {
   
   // Relation to course preferences
   courseSubscriptions UserCourseSubscription[]
+  
+  // Payment Status
+  paymentStatus       PaymentStatus @default(UNPAID)
+  
+  // Financial transactions
+  transactions        Transaction[]
+  
+  // Audit logs (Admin actions)
+  auditLogs           AuditLog[]
 }
 
 model Account {
@@ -120,4 +129,65 @@ enum Role {
 enum Language {
   TR
   EN
+}
+
+enum TransactionType {
+  INCOME  // Gelir
+  EXPENSE // Gider
+  TRANSFER // Hesaplar arası virman
+  DISTRIBUTION // Kâr dağıtımı (para çıkışı)
+}
+
+enum PaymentStatus {
+  UNPAID  // Ödenmedi
+  PAID    // Ödendi
+  FREE    // Ücretsiz/Burslu
+}
+
+model Transaction {
+  id          String          @id @default(cuid())
+  amount      Float           // Tutar (Ondalıklı olabilir)
+  type        TransactionType // Gelir/Gider/Transfer/Distribution
+  category    String          // Örn: "Lisans Satışı", "Sunucu Kirası", "Hayır İşi"
+  description String?         @db.Text // Açıklama (opsiyonel)
+  date        DateTime        @default(now())
+
+  // Hesap ilişkisi (zorunlu)
+  accountId   String
+  account     FinancialAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  // Transfer işlemlerinde karşı hesabı tutmak için (opsiyonel)
+  relatedAccountId String?
+
+  // İlişkili kullanıcı (eğer bu bir kullanıcı ödemesiyse)
+  userId      String?
+  user        User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime        @default(now())
+}
+
+// Çoklu Kasa/Hesap modeli
+model FinancialAccount {
+  id           String        @id @default(cuid())
+  name         String        // Örn: "Nakit Kasa", "Garanti Bankası", "Semih Cep"
+  type         String        // Örn: "CASH", "BANK", "PERSONAL"
+  balance      Float         @default(0) // Anlık bakiye
+
+  // İlişki
+  transactions Transaction[]
+
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  action      String   // Örn: "USER_BANNED", "LICENSE_GENERATED", "MONEY_COLLECTED"
+  entityId    String?  // Etkilenen nesnenin ID'si (örn: Silinen kullanıcının ID'si)
+  details     String?  @db.Text // Detaylı açıklama veya JSON string
+  createdAt   DateTime @default(now())
+  
+  // İşlemi yapan admin
+  adminId     String
+  admin       User     @relation(fields: [adminId], references: [id], onDelete: Cascade)
 }

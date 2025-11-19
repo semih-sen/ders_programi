@@ -6,6 +6,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { revalidatePath } from 'next/cache';
 import { randomUUID } from 'crypto';
+import { logAdminAction } from '@/lib/audit';
 
 async function checkAdmin() {
   const session = await getServerSession(authOptions);
@@ -40,6 +41,9 @@ export async function banUser(formData: FormData) {
       banReason: banReason.trim(),
     },
   });
+  
+  // Audit log kaydı
+  await logAdminAction('USER_BANNED', `Sebep: ${banReason.trim()}`, userId);
   
   revalidatePath('/admin/users');
   return { success: true };
@@ -94,6 +98,10 @@ export async function deleteUser(userId: string) {
     }
     // 4. Kullanıcıyı sil
     await prisma.user.delete({ where: { id: userId } });
+    
+    // Audit log kaydı
+    await logAdminAction('USER_DELETED', 'Kullanıcı silindi.', userId);
+    
     revalidatePath('/admin/users');
     return { success: 'Kullanıcı ve Google erişim anahtarı başarıyla silindi.' };
   } catch (error) {
@@ -137,6 +145,31 @@ export async function resetYearlySync(userId: string) {
   revalidatePath('/dashboard');
 
   return { success: true, message: 'Yıllık eşitleme durumu sıfırlandı.' };
+}
+
+/**
+ * Kullanıcının ödeme durumunu günceller
+ */
+export async function updatePaymentStatus(userId: string, status: 'UNPAID' | 'PAID' | 'FREE') {
+  await checkAdmin();
+
+  if (!userId) {
+    return { error: 'Kullanıcı ID gerekli.' };
+  }
+
+  try {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { paymentStatus: status },
+    });
+
+    revalidatePath('/admin/users');
+    revalidatePath(`/admin/users/${userId}`);
+    return { success: 'Ödeme durumu güncellendi.' };
+  } catch (error) {
+    console.error('Ödeme durumu güncelleme hatası:', error);
+    return { error: 'Ödeme durumu güncellenirken bir hata oluştu.' };
+  }
 }
 
 /**
@@ -185,6 +218,9 @@ export async function manuallyActivateUser(userId: string) {
       },
     }),
   ]);
+
+  // Audit log kaydı
+  await logAdminAction('USER_ACTIVATED_MANUAL', 'Manuel aktivasyon.', userId);
 
   // List ve detay sayfalarını yeniden doğrula
   revalidatePath('/admin/users');

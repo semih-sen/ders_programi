@@ -24,6 +24,12 @@ export default function Footer() {
             >
               Hizmet Şartları
             </Link>
+            <Link
+              href="/iletisim"
+              className="text-slate-400 hover:text-white transition-colors text-sm font-medium"
+            >
+              İletişim
+            </Link>
           </div>
         </div>
 

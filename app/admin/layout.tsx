@@ -41,11 +41,17 @@ export default async function AdminLayout({ children }: { children: ReactNode })
                   <MobileNavLink href="/admin/licenses" icon={<KeyIcon />}>
                     Lisans Yönetimi
                   </MobileNavLink>
+                  <MobileNavLink href="/admin/finance" icon={<WalletIcon />}>
+                    Finans & Kasa
+                  </MobileNavLink>
                   <MobileNavLink href="/admin/data-upload" icon={<UploadIcon />}>
                     Dosya Yükleme
                   </MobileNavLink>
                   <MobileNavLink href="/admin/data-files" icon={<EditIcon />}>
                     JSON Veri Editörü
+                  </MobileNavLink>
+                  <MobileNavLink href="/admin/audit" icon={<ClipboardIcon />}>
+                    Denetim Kaydı
                   </MobileNavLink>
                   <div className="border-t border-slate-700 mt-2 pt-2">
                     <div className="px-3 py-2 text-sm">
@@ -85,11 +91,17 @@ export default async function AdminLayout({ children }: { children: ReactNode })
               <NavLink href="/admin/licenses" icon={<KeyIcon />}>
                 Lisans Yönetimi
               </NavLink>
+              <NavLink href="/admin/finance" icon={<WalletIcon />}>
+                Finans & Kasa
+              </NavLink>
               <NavLink href="/admin/data-upload" icon={<UploadIcon />}>
                 Dosya Yükleme
               </NavLink>
               <NavLink href="/admin/data-files" icon={<EditIcon />}>
                 JSON Veri Editörü
+              </NavLink>
+              <NavLink href="/admin/audit" icon={<ClipboardIcon />}>
+                Denetim Kaydı
               </NavLink>
             </nav>
 
@@ -173,6 +185,22 @@ function EditIcon() {
   return (
     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+    </svg>
+  );
+}
+
+function WalletIcon() {
+  return (
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+    </svg>
+  );
+}
+
+function ClipboardIcon() {
+  return (
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
     </svg>
   );
 }
