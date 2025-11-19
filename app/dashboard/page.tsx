@@ -104,9 +104,7 @@ export default async function DashboardPage() {
   // Fetch user's preferences and subscriptions
   const userPreferences = await prisma.user.findUnique({
     where: { id: user.id },
-    include: {
-      accounts: true,
-    },
+    
     select: {
       uygulamaGrubu: true,
       anatomiGrubu: true,
@@ -114,10 +112,15 @@ export default async function DashboardPage() {
       classYear: true,
       language: true,
       hasYearlySynced: true,
-      accounts: true,
+      
       courseSubscriptions: {
         include: {
           course: true,
+        },
+      },
+      accounts: {
+        select: {
+          scope: true,
         },
       },
     },
