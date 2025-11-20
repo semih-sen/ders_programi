@@ -1,7 +1,7 @@
- 'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
-import { addTransaction, updateTransaction, deleteTransaction, searchUsers, transferFunds, toggleTransactionStatus, getMonthlyBalanceSheet } from './actions';
+import { addTransaction, updateTransaction, deleteTransaction, searchUsers, transferFunds, toggleTransactionStatus } from './actions';
 import { useRouter } from 'next/navigation';
 
 interface Transaction {
@@ -25,24 +25,18 @@ interface Transaction {
   relatedAccountId?: string | null;
 }
 
-interface FinancialStats {
-  totalIncome: number;
-  totalExpense: number;
-  netBalance: number;
-  categoryBreakdown: Record<string, number>;
+interface FinanceClientProps {
   transactions: Transaction[];
   accounts: { id: string; name: string; type: string; balance: number }[];
+  periodLabel: string;
 }
 
-export default function FinancePage({ stats }: { stats: FinancialStats }) {
+export default function FinanceClient({ transactions, accounts, periodLabel }: FinanceClientProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [isDistribution, setIsDistribution] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
-  const [showMonthlyReport, setShowMonthlyReport] = useState(false);
-  const [monthlyData, setMonthlyData] = useState<any[]>([]);
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const router = useRouter();
 
   // Form state
@@ -78,25 +72,6 @@ export default function FinancePage({ stats }: { stats: FinancialStats }) {
 
     return () => clearTimeout(searchTimeout);
   }, [userSearchQuery]);
-
-  // Aylık rapor yükle
-  useEffect(() => {
-    if (showMonthlyReport) {
-      loadMonthlyReport();
-    }
-  }, [showMonthlyReport, selectedYear]);
-
-  const loadMonthlyReport = async () => {
-    setIsLoading(true);
-    try {
-      const data = await getMonthlyBalanceSheet(selectedYear);
-      setMonthlyData(data);
-    } catch (error) {
-      console.error('Aylık rapor yükleme hatası:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -213,190 +188,37 @@ export default function FinancePage({ stats }: { stats: FinancialStats }) {
     : ['Sunucu Kirası', 'Domain', 'Teknik Altyapı', 'Hayır İşi', 'Diğer'];
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
-      <div className="mb-6 sm:mb-8">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2">
-              💰 Finans & Kasa Yönetimi
-            </h1>
-            <p className="text-sm sm:text-base text-slate-400">
-              Gelir ve gider takibi, vadeli işlemler, aylık raporlama
-            </p>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <button
-              onClick={() => { setIsDistribution(false); setType('INCOME'); setIsModalOpen(true); }}
-              className="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg font-semibold hover:from-green-600 hover:to-emerald-700 transition-all shadow-lg"
-            >
-              + Yeni İşlem Ekle
-            </button>
-            <button
-              onClick={() => setIsTransferModalOpen(true)}
-              className="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-600 text-white rounded-lg font-semibold hover:from-blue-600 hover:to-cyan-700 transition-all shadow-lg"
-            >
-              ↔ Virman / Transfer Yap
-            </button>
-            <button
-              onClick={() => { setIsDistribution(true); setType('EXPENSE'); setCategory('Kâr Payı'); setIsModalOpen(true); }}
-              className="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-amber-500 to-yellow-600 text-white rounded-lg font-semibold hover:from-amber-600 hover:to-yellow-700 transition-all shadow-lg"
-            >
-              ⬇ Kâr Dağıtımı
-            </button>
-            <button
-              onClick={() => setShowMonthlyReport(!showMonthlyReport)}
-              className="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-lg font-semibold hover:from-purple-600 hover:to-pink-700 transition-all shadow-lg"
-            >
-              📊 {showMonthlyReport ? 'Raporu Gizle' : 'Aylık Rapor'}
-            </button>
-          </div>
+    <>
+      {/* Aksiyon Butonları */}
+      <div className="mb-6">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <button
+            onClick={() => { setIsDistribution(false); setType('INCOME'); setIsModalOpen(true); }}
+            className="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg font-semibold hover:from-green-600 hover:to-emerald-700 transition-all shadow-lg"
+          >
+            + Yeni İşlem Ekle
+          </button>
+          <button
+            onClick={() => setIsTransferModalOpen(true)}
+            className="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-600 text-white rounded-lg font-semibold hover:from-blue-600 hover:to-cyan-700 transition-all shadow-lg"
+          >
+            ↔ Virman / Transfer Yap
+          </button>
+          <button
+            onClick={() => { setIsDistribution(true); setType('EXPENSE'); setCategory('Kâr Payı'); setIsModalOpen(true); }}
+            className="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-amber-500 to-yellow-600 text-white rounded-lg font-semibold hover:from-amber-600 hover:to-yellow-700 transition-all shadow-lg"
+          >
+            ⬇ Kâr Dağıtımı
+          </button>
         </div>
       </div>
-
-      {/* İstatistik Kartları */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        {/* Toplam Gelir */}
-        <div className="bg-gradient-to-br from-green-500/20 to-emerald-600/20 backdrop-blur-sm rounded-xl border border-green-500/30 p-6">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-green-400 font-semibold">Toplam Gelir</h3>
-            <span className="text-2xl">📈</span>
-          </div>
-          <p className="text-3xl font-bold text-white">
-            ₺{stats.totalIncome.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
-          </p>
-        </div>
-
-        {/* Toplam Gider */}
-        <div className="bg-gradient-to-br from-red-500/20 to-rose-600/20 backdrop-blur-sm rounded-xl border border-red-500/30 p-6">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-red-400 font-semibold">Toplam Gider</h3>
-            <span className="text-2xl">📉</span>
-          </div>
-          <p className="text-3xl font-bold text-white">
-            ₺{stats.totalExpense.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
-          </p>
-        </div>
-
-        {/* Net Kasa */}
-        <div className={`bg-gradient-to-br ${
-          stats.netBalance >= 0 
-            ? 'from-blue-500/20 to-cyan-600/20 border-blue-500/30' 
-            : 'from-amber-500/20 to-yellow-600/20 border-amber-500/30'
-        } backdrop-blur-sm rounded-xl border p-6`}>
-          <div className="flex items-center justify-between mb-2">
-            <h3 className={stats.netBalance >= 0 ? 'text-blue-400' : 'text-amber-400'}>
-              Net Kasa Durumu
-            </h3>
-            <span className="text-2xl">💼</span>
-          </div>
-          <p className="text-3xl font-bold text-white">
-            ₺{stats.netBalance.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
-          </p>
-        </div>
-      </div>
-
-      {/* Aylık Bilanço Raporu */}
-      {showMonthlyReport && (
-        <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl border border-slate-700 overflow-hidden mb-8">
-          <div className="p-4 sm:p-6 border-b border-slate-700">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-white">📊 Aylık Bilanço Raporu</h2>
-                <p className="text-sm text-slate-400 mt-1">
-                  Tüm aylar için gelir, gider, borç ve alacak özeti
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <label className="text-sm text-slate-300">Yıl:</label>
-                <select
-                  value={selectedYear}
-                  onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                  className="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                >
-                  {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map(year => (
-                    <option key={year} value={year}>{year}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
-          <div className="p-4 sm:p-6">
-            {isLoading ? (
-              <div className="text-center py-12">
-                <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
-                <p className="text-slate-400 mt-4">Yükleniyor...</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[800px]">
-                  <thead className="bg-slate-900/50">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase">Ay</th>
-                      <th className="px-4 py-3 text-right text-xs font-semibold text-green-400 uppercase">Gerçekleşen Gelir</th>
-                      <th className="px-4 py-3 text-right text-xs font-semibold text-red-400 uppercase">Gerçekleşen Gider</th>
-                      <th className="px-4 py-3 text-right text-xs font-semibold text-blue-400 uppercase">Net (Gelir-Gider)</th>
-                      <th className="px-4 py-3 text-right text-xs font-semibold text-amber-400 uppercase">Bekleyen Alacak</th>
-                      <th className="px-4 py-3 text-right text-xs font-semibold text-orange-400 uppercase">Bekleyen Borç</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-700">
-                    {monthlyData.map((data) => {
-                      const net = data.income - data.expense;
-                      return (
-                        <tr key={data.month} className="hover:bg-slate-700/30 transition-colors">
-                          <td className="px-4 py-3 text-sm font-medium text-white">
-                            {data.monthName}
-                          </td>
-                          <td className="px-4 py-3 text-right text-green-400 font-semibold">
-                            ₺{data.income.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
-                          </td>
-                          <td className="px-4 py-3 text-right text-red-400 font-semibold">
-                            ₺{data.expense.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
-                          </td>
-                          <td className={`px-4 py-3 text-right font-bold ${net >= 0 ? 'text-blue-400' : 'text-rose-400'}`}>
-                            {net >= 0 ? '+' : ''}₺{net.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
-                          </td>
-                          <td className="px-4 py-3 text-right text-amber-400 font-semibold">
-                            ₺{data.receivables.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
-                          </td>
-                          <td className="px-4 py-3 text-right text-orange-400 font-semibold">
-                            ₺{data.payables.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                    <tr className="bg-slate-900/50 font-bold">
-                      <td className="px-4 py-4 text-white">TOPLAM</td>
-                      <td className="px-4 py-4 text-right text-green-400">
-                        ₺{monthlyData.reduce((sum, d) => sum + d.income, 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
-                      </td>
-                      <td className="px-4 py-4 text-right text-red-400">
-                        ₺{monthlyData.reduce((sum, d) => sum + d.expense, 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
-                      </td>
-                      <td className="px-4 py-4 text-right text-blue-400">
-                        ₺{monthlyData.reduce((sum, d) => sum + (d.income - d.expense), 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
-                      </td>
-                      <td className="px-4 py-4 text-right text-amber-400">
-                        ₺{monthlyData.reduce((sum, d) => sum + d.receivables, 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
-                      </td>
-                      <td className="px-4 py-4 text-right text-orange-400">
-                        ₺{monthlyData.reduce((sum, d) => sum + d.payables, 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* İşlem Geçmişi Tablosu */}
       <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl border border-slate-700 overflow-hidden">
         <div className="p-4 border-b border-slate-700">
-          <h2 className="text-xl font-bold text-white">İşlem Geçmişi</h2>
+          <h2 className="text-xl font-bold text-white">İşlem Geçmişi - {periodLabel}</h2>
           <p className="text-sm text-slate-400 mt-1">
-            Toplam {stats.transactions.length} işlem
+            Dönem içinde {transactions.length} işlem
           </p>
         </div>
         <div className="overflow-x-auto">
@@ -415,18 +237,18 @@ export default function FinancePage({ stats }: { stats: FinancialStats }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-700">
-              {stats.transactions.length === 0 ? (
+              {transactions.length === 0 ? (
                 <tr>
                   <td colSpan={9} className="px-6 py-12 text-center">
                     <div className="flex flex-col items-center justify-center">
                       <span className="text-5xl mb-3">📊</span>
-                      <p className="text-slate-400 text-lg font-medium">Henüz işlem kaydı yok</p>
-                      <p className="text-slate-500 text-sm mt-1">İlk işleminizi ekleyerek başlayın</p>
+                      <p className="text-slate-400 text-lg font-medium">Bu dönemde işlem kaydı yok</p>
+                      <p className="text-slate-500 text-sm mt-1">Yeni işlem ekleyerek başlayın</p>
                     </div>
                   </td>
                 </tr>
               ) : (
-                stats.transactions.map((transaction) => {
+                transactions.map((transaction) => {
                   const isPending = transaction.status === 'PENDING';
                   const rowClass = isPending ? 'bg-amber-500/5 hover:bg-amber-500/10' : 'hover:bg-slate-700/30';
                   
@@ -664,7 +486,7 @@ export default function FinancePage({ stats }: { stats: FinancialStats }) {
                   className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">Seçiniz...</option>
-                  {stats.accounts.map((acc) => (
+                  {accounts.map((acc) => (
                     <option key={acc.id} value={acc.id}>
                       {acc.name} ({acc.type}) — ₺{acc.balance.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
                     </option>
@@ -823,7 +645,7 @@ export default function FinancePage({ stats }: { stats: FinancialStats }) {
                 <label className="block text-sm font-medium text-slate-300 mb-2">Kaynak Hesap *</label>
                 <select value={fromAccountId} onChange={(e) => setFromAccountId(e.target.value)} required className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white">
                   <option value="">Seçiniz...</option>
-                  {stats.accounts.map((acc) => (
+                  {accounts.map((acc) => (
                     <option key={acc.id} value={acc.id}>{acc.name} — ₺{acc.balance.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</option>
                   ))}
                 </select>
@@ -832,7 +654,7 @@ export default function FinancePage({ stats }: { stats: FinancialStats }) {
                 <label className="block text-sm font-medium text-slate-300 mb-2">Hedef Hesap *</label>
                 <select value={toAccountId} onChange={(e) => setToAccountId(e.target.value)} required className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white">
                   <option value="">Seçiniz...</option>
-                  {stats.accounts.map((acc) => (
+                  {accounts.map((acc) => (
                     <option key={acc.id} value={acc.id}>{acc.name} — ₺{acc.balance.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</option>
                   ))}
                 </select>
@@ -853,6 +675,6 @@ export default function FinancePage({ stats }: { stats: FinancialStats }) {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

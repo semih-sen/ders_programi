@@ -282,6 +282,146 @@ export async function getFinancialStats() {
 }
 
 /**
+ * Dönem Bazlı Finans Raporu
+ * Belirtilen tarih aralığı için detaylı finansal rapor oluşturur
+ */
+export async function getFinanceReport(startDate: Date, endDate: Date) {
+  await checkAdmin();
+
+  try {
+    // Hesapları getir
+    const accounts = await prisma.financialAccount.findMany({ 
+      orderBy: { name: 'asc' } 
+    });
+
+    // 1. DEVREDEN VARLIK (Opening Balance)
+    // Dönem başından önceki tüm COMPLETED işlemlerin net bakiyesi
+    const openingBalanceData = await prisma.transaction.aggregate({
+      where: {
+        date: { lt: startDate },
+        status: 'COMPLETED',
+        type: { not: 'TRANSFER' },
+      },
+      _sum: {
+        amount: true,
+      },
+    });
+
+    // Devreden varlık hesabı için gelir ve gideri ayırarak hesaplayalım
+    const openingTransactions = await prisma.transaction.findMany({
+      where: {
+        date: { lt: startDate },
+        status: 'COMPLETED',
+        type: { not: 'TRANSFER' },
+      },
+      select: {
+        amount: true,
+        type: true,
+      },
+    });
+
+    let openingBalance = 0;
+    openingTransactions.forEach((t: any) => {
+      if (t.type === 'INCOME') {
+        openingBalance += t.amount;
+      } else if (t.type === 'EXPENSE' || t.type === 'DISTRIBUTION') {
+        openingBalance -= t.amount;
+      }
+    });
+
+    // 2. DÖNEM İÇİ İŞLEMLER
+    const periodTransactions = await prisma.transaction.findMany({
+      where: {
+        date: {
+          gte: startDate,
+          lte: endDate,
+        },
+        type: { not: 'TRANSFER' },
+      },
+      orderBy: { date: 'desc' },
+      include: {
+        user: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
+        account: {
+          select: { id: true, name: true, type: true },
+        },
+      },
+    });
+
+    // 3. DÖNEM GELİRLERİ
+    const periodIncomeCompleted = periodTransactions
+      .filter((t: any) => t.type === 'INCOME' && t.status === 'COMPLETED')
+      .reduce((sum: number, t: any) => sum + t.amount, 0);
+
+    const periodIncomePending = periodTransactions
+      .filter((t: any) => t.type === 'INCOME' && t.status === 'PENDING')
+      .reduce((sum: number, t: any) => sum + t.amount, 0);
+
+    // 4. DÖNEM GİDERLERİ
+    const periodExpenseCompleted = periodTransactions
+      .filter((t: any) => (t.type === 'EXPENSE' || t.type === 'DISTRIBUTION') && t.status === 'COMPLETED')
+      .reduce((sum: number, t: any) => sum + t.amount, 0);
+
+    const periodExpensePending = periodTransactions
+      .filter((t: any) => (t.type === 'EXPENSE' || t.type === 'DISTRIBUTION') && t.status === 'PENDING')
+      .reduce((sum: number, t: any) => sum + t.amount, 0);
+
+    // 5. HESAPLAMALAR
+    const netChange = periodIncomeCompleted - periodExpenseCompleted; // Dönem net farkı (sadece gerçekleşenler)
+    const currentBalance = openingBalance + netChange; // Bugünkü kasa (gerçekleşen işlemler)
+    const projectedClosing = currentBalance + periodIncomePending - periodExpensePending; // Tahmini dönem sonu
+
+    // 6. KATEGORİ BAZLI DAĞILIM (Dönem içi)
+    const categoryBreakdown: Record<string, number> = {};
+    periodTransactions.forEach((t: any) => {
+      if (!categoryBreakdown[t.category]) {
+        categoryBreakdown[t.category] = 0;
+      }
+      const amount = t.status === 'COMPLETED' ? t.amount : 0; // Sadece tamamlananları kategori dağılımına dahil et
+      categoryBreakdown[t.category] += t.type === 'INCOME' ? amount : -amount;
+    });
+
+    return {
+      // Devreden varlık
+      openingBalance,
+      
+      // Dönem gelirleri
+      periodIncome: {
+        completed: periodIncomeCompleted,
+        pending: periodIncomePending,
+        total: periodIncomeCompleted + periodIncomePending,
+      },
+      
+      // Dönem giderleri
+      periodExpense: {
+        completed: periodExpenseCompleted,
+        pending: periodExpensePending,
+        total: periodExpenseCompleted + periodExpensePending,
+      },
+      
+      // Net değişim ve bakiyeler
+      netChange,
+      currentBalance,
+      projectedClosing,
+      
+      // İşlemler ve hesaplar
+      transactions: periodTransactions,
+      accounts,
+      
+      // Kategori dağılımı
+      categoryBreakdown,
+    };
+  } catch (error) {
+    console.error('Dönem raporu hesaplama hatası:', error);
+    throw error;
+  }
+}
+
+/**
  * Hesaplar arası virman/transfer
  */
 export async function transferFunds(params: {
