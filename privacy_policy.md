@@ -1,10 +1,15 @@
 # Sirkadiyen Gizlilik Politikası
 
-> Son Güncelleme: 1 Kasım 2025
+> Son Güncelleme: 20 Kasım 2025
 
-Biz, Halil Semih Şen ve Abdullah Ceylan (İstanbul Tıp Fakültesi Dönem 2 öğrencileri), Sirkadiyen hizmetini ("Hizmet") sizlere sunarken gizliliğinize ne kadar önem verdiğimizi açıkça belirtmek isteriz.
+Biz, Semih Şen ve Abdullah Ceylan (İstanbul Tıp Fakültesi Dönem 2 öğrencileri), 
+Sirkadiyen hizmetini ("Hizmet") sizlere sunarken gizliliğinize ne kadar önem 
+verdiğimizi açıkça belirtmek isteriz.
 
-Bizim felsefemiz nettir: Sizin verilerinizde gözümüz yok. Bu hizmet, tamamen tıp fakültesi öğrencilerinin yaşadığı karmaşık ders programı sorununu çözmek için geliştirilmiş bir araçtır. Hiçbir verinizi, hizmetin çalışması için gereken teknik zorunluluklar dışında işlemeyecek, analiz etmeyecek veya paylaşmayacağız.
+Bizim felsefemiz nettir: Sizin verilerinizde gözümüz yok. Bu hizmet, tamamen tıp 
+fakültesi öğrencilerinin yaşadığı karmaşık ders programı sorununu çözmek için 
+geliştirilmiş bir araçtır. Hiçbir verinizi, hizmetin çalışması için gereken teknik 
+zorunluluklar dışında işlemeyecek, analiz etmeyecek veya paylaşmayacağız.
 
 1. Hangi Verileri Topluyoruz?
 
@@ -12,46 +17,132 @@ Hizmetimizin çalışabilmesi için sizden minimum düzeyde bilgiye ihtiyaç duy
 
     Kullanıcı Tarafından Sağlanan Bilgiler:
 
-        Okul Numaranız: Fakültenin yayınladığı ana ders programından size ait dersleri filtrelemek için gereklidir.
+        Okul Numaranız: Fakültenin yayınladığı ana ders programından size ait 
+        dersleri filtrelemek için gereklidir.
 
-        Uygulama Grubunuz (A, B, C...): Uygulama, laboratuvar ve diseksiyon derslerinizi doğru bir şekilde belirlemek için gereklidir.
+        Uygulama Grubunuz (A, B, C...): Uygulama, laboratuvar ve diseksiyon 
+        derslerinizi doğru bir şekilde belirlemek için gereklidir.
 
     Google Tarafından Sağlanan Bilgiler (Google OAuth İzni):
 
-        Hizmetimiz, Google Takviminize ders programınızı ekleyebilmek için sizden Google Takvim'inize erişim izni ister.
+        Hizmetimiz, Google Takviminize ders programınızı ekleyebilmek için sizden 
+        Google Takvim'inize erişim izni ister.
 
-        Bu izin, sadece ders etkinlikleri oluşturma, güncelleme ve silme yetkisini kapsar.
+        Bu izin, sadece ders etkinlikleri oluşturma, güncelleme ve silme yetkisini 
+        kapsar.
 
 2. Verilerinizi Nasıl Kullanıyoruz ve İşliyoruz?
 
-Burada çok şeffaf olmak istiyoruz. "Veri işlememek" temel ilkemizdir. Yaptığımız tek "işlem", otomasyonun çalışması için zorunlu olan teknik adımlardır:
+Burada çok şeffaf olmak istiyoruz. "Veri işlememek" temel ilkemizdir. Yaptığımız tek 
+"işlem", otomasyonun çalışması için zorunlu olan teknik adımlardır:
 
-    Yetkilendirme: Google Takviminize sürekli ve otomatik erişim sağlayabilmek için Google'ın verdiği refresh_token (yenileme anahtarı) bilginizi şifrelenmiş olarak güvenli sunucularımızda saklarız. Bu anahtar olmadan, sizden her gün tekrar tekrar izin istememiz gerekirdi.
+Yetkilendirme: Google Takviminize sürekli ve otomatik erişim sağlayabilmek için 
+Google'ın verdiği refresh_token (yenileme anahtarı) bilginizi şifrelenmiş olarak 
+güvenli sunucularımızda saklarız. Bu anahtar olmadan, sizden her gün tekrar tekrar 
+izin istememiz gerekirdi.
 
-    Filtreleme: Sakladığımız Okul Numaranız ve Uygulama Grubunuz bilgisini, fakültenin yayınladığı genel program (CSV/Excel dosyası) ile karşılaştırmak için kullanırız.
+Filtreleme: Sakladığımız Okul Numaranız ve Uygulama Grubunuz bilgisini, fakültenin
+ yayınladığı genel program (CSV/Excel dosyası) ile karşılaştırmak için kullanırız.
 
-    Takvime Ekleme: Bu filtreleme sonucu ortaya çıkan size özel ders listesini, sakladığımız Google yetki anahtarını kullanarak Google Takviminize otomatik olarak ekleriz. Programda bir değişiklik olursa, mevcut kayıtları günceller veya sileriz.
+Takvime Ekleme: Bu filtreleme sonucu ortaya çıkan size özel ders listesini, 
+sakladığımız Google yetki anahtarını kullanarak Google Takviminize otomatik olarak 
+ekleriz. Programda bir değişiklik olursa, mevcut kayıtları günceller veya sileriz.
 
 Neyi ASLA Yapmayız:
 
-    Google Takviminizdeki mevcut diğer etkinliklerinizi, kişisel randevularınızı veya notlarınızı ASLA OKUMAYIZ, SAKLAMAYIZ veya ANALİZ ETMEYİZ.
+    Google Takviminizdeki mevcut diğer etkinliklerinizi, kişisel randevularınızı 
+    veya notlarınızı ASLA OKUMAYIZ, SAKLAMAYIZ veya ANALİZ ETMEYİZ.
 
-    Size ait olan Okul Numarası, Grup Bilgisi veya Google Yetki Anahtarı bilgilerinizi ASLA üçüncü taraflarla (reklam şirketleri, veri analiz firmaları vb.) paylaşmayız.
+    Size ait olan Okul Numarası, Grup Bilgisi veya Google Yetki Anahtarı 
+    bilgilerinizi ASLA üçüncü taraflarla (reklam şirketleri, veri analiz firmaları
+     vb.) paylaşmayız.
 
-    Verilerinizi size reklam göstermek, profilinizi çıkarmak veya hizmetin temel amacı dışında herhangi bir ticari faaliyet için kullanmayız.
+    Verilerinizi size reklam göstermek, profilinizi çıkarmak veya hizmetin temel 
+    amacı dışında herhangi bir ticari faaliyet için kullanmayız.
 
 3. Veri Güvenliği
 
-Topladığımız bu minimum bilgiyi (Google refresh_token, okul no, grup bilgisi) endüstri standardı şifreleme yöntemleriyle korunan veritabanlarında saklıyoruz.
+Topladığımız bu minimum bilgiyi (Google refresh_token, okul no, grup bilgisi) 
+endüstri standardı şifreleme yöntemleriyle korunan veritabanlarında saklıyoruz.
 
 4. Hizmetin Sona Ermesi
 
-Hizmeti kullanmayı bırakmak isterseniz, https://myaccount.google.com/permissions adresinden "Sirkadiyen" uygulamasına verdiğiniz izni kaldırmanız yeterlidir. İzni kaldırdığınız anda sistemimiz artık takviminize erişemez ve otomasyon durur. Talebiniz üzerine tüm verilerinizi sistemimizden kalıcı olarak silebiliriz.
+Hizmeti kullanmayı bırakmak isterseniz, https://myaccount.google.com/permissions 
+adresinden "Sirkadiyen" uygulamasına verdiğiniz izni kaldırmanız yeterlidir. İzni kaldırdığınız anda sistemimiz artık takviminize erişemez ve otomasyon durur. 
+Talebiniz üzerine tüm verilerinizi sistemimizden kalıcı olarak silebiliriz.
+
 
 5. İletişim
 
 Bu gizlilik politikasıyla ilgili herhangi bir sorunuz veya endişeniz olursa, bizimle doğrudan iletişime geçebilirsiniz.
 
-    Proje Sahipleri: Halil Semih Şen & Abdullah Ceylan
+    Proje Sahipleri: Semih Şen & Abdullah Ceylan
 
-    E-posta: destek@sirkadiyen.com
+    E-posta: halil.semih.sen@gmail.com & abdullahceylan711@gmail.com
+
+
+---
+
+## Additional Information on Google User Data
+
+In compliance with the Google API Services User Data Policy, Sirkadiyen ("we", "us", or "our") 
+provides this explicit disclosure regarding how we access, use, store, and share 
+your Google User Data.
+
+### 1. Data Access and Collection
+
+When you choose to connect your Google Account to Sirkadiyen, we request access to
+ the following specific scopes:
+
+- **Identity Information (userinfo.profile, userinfo.email)**: We access your name,
+ email address, and profile picture solely to authenticate your identity and create 
+ a unique user profile within our system.
+
+- **Calendar Management (calendar.events.owned)**: We access your Google Calendar to
+ create, update, and remove class schedule events.
+
+- **Note**: We strictly request the `owned` scope. This means Sirkadiyen cannot 
+read, modify, or delete any personal events you created yourself or events created 
+by other applications. Our access is isolated strictly to the events generated by 
+Sirkadiyen.
+
+### 2. How We Use Your Data
+
+Your Google User Data is used exclusively for the application's core functionality: Academic Schedule Integration.
+
+- We process your university course schedule and map it to calendar event objects.
+- We use the authentication tokens to securely send these event objects to your personal Google Calendar via the Google Calendar API.
+- We do not use your Google User Data for advertising, surveillance, or any personalized marketing purposes.
+- We do not use your data to train artificial intelligence (AI) or machine learning (ML) models.
+
+### 3. Data Sharing and Transfer
+
+- **No Third-Party Sharing**: We do not sell, trade, transfer, or otherwise share 
+your Google User Data with any third parties, data brokers, or advertising networks.
+- **Internal Use Only**: The data transfer occurs directly between Google's servers 
+and Sirkadiyen's secure servers solely for the purpose of executing the calendar sync.
+
+### 4. Data Storage and Security
+
+We employ industry-standard security measures to protect your information:
+
+- **Encryption**: All data transmitted between your client, our servers, and 
+Google's APIs is encrypted using TLS/SSL (Transport Layer Security) protocols.
+- **Token Security**: OAuth 2.0 access and refresh tokens are stored in our secure 
+database with restricted access controls. Only the automated system processes these 
+tokens to perform background synchronization tasks (e.g., updating your schedule 
+when a class time changes).
+
+### 5. Data Retention and Deletion
+
+- **Retention**: We retain your Google User Data only for as long as you choose to use the Sirkadiyen service.
+- **User Control**: You have full control over your data. You can revoke Sirkadiyen's access at any time via your Google Account Security Settings.
+- **Deletion**: If you choose to delete your Sirkadiyen account via the "Account 
+Settings" page, all associated Google data (including access tokens, refresh tokens,
+ and profile info) is permanently deleted from our database immediately.
+
+### 6. Limited Use Disclosure
+
+Sirkadiyen's use and transfer to any other app of information received from Google 
+APIs will adhere to Google API Services User Data Policy, including the Limited Use 
+requirements.

@@ -32,7 +32,7 @@ export default function PrivacyPage() {
             Gizlilik Politikası
           </h1>
           <p className="text-slate-400">
-            Son güncellenme: 2 Kasım 2025
+            Son güncellenme: 20 Kasım 2025
           </p>
         </div>
 
