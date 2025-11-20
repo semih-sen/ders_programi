@@ -260,3 +260,93 @@ export async function saveOnboardingPreferences(
     };
   }
 }
+
+// ---------------------------------------------
+// Delete Account: Revoke Google Token & Delete User (Server Action)
+// ---------------------------------------------
+
+export type DeleteAccountState = {
+  success?: boolean;
+  error?: string;
+};
+
+export async function deleteAccount(): Promise<DeleteAccountState> {
+  try {
+    // Get the current session
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.id) {
+      return { error: 'Oturum bulunamadı. Lütfen tekrar giriş yapın.' };
+    }
+
+    const userId = session.user.id;
+
+    // Get user's Google account info (for refresh token)
+    const account = await prisma.account.findFirst({
+      where: {
+        userId,
+        provider: 'google',
+      },
+      select: {
+        refresh_token: true,
+      },
+    });
+
+    // Revoke Google refresh token if exists
+    if (account?.refresh_token) {
+      try {
+        await fetch('https://oauth2.googleapis.com/revoke', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: `token=${account.refresh_token}`,
+        });
+        console.log('✅ Google refresh token revoked for user:', userId);
+      } catch (revokeError) {
+        console.error('⚠️ Error revoking Google token:', revokeError);
+        // Continue with deletion even if revoke fails
+      }
+    }
+
+    // Delete user and all related data in a transaction
+    // Prisma will automatically cascade delete related records based on schema
+    await prisma.$transaction(async (tx: any) => {
+      // Delete user course subscriptions
+      await tx.userCourseSubscription.deleteMany({
+        where: { userId },
+      });
+
+      // Delete user accounts (Google OAuth)
+      await tx.account.deleteMany({
+        where: { userId },
+      });
+
+      // Delete user sessions
+      await tx.session.deleteMany({
+        where: { userId },
+      });
+
+      // Mark license key as unused (allow reuse)
+      await tx.licenseKey.updateMany({
+        where: { activatedByUserId: userId },
+        data: {
+          isUsed: false,
+          activatedByUserId: null,
+        },
+      });
+
+      // Finally, delete the user
+      await tx.user.delete({
+        where: { id: userId },
+      });
+    });
+
+    console.log('✅ User account deleted:', userId);
+
+    return { success: true };
+  } catch (error) {
+    console.error('❌ Error deleting account:', error);
+    return { error: 'Hesap silinirken bir hata oluştu. Lütfen tekrar deneyin.' };
+  }
+}

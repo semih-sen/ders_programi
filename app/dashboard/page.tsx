@@ -7,6 +7,7 @@ import OnboardingForm from './OnboardingForm';
 import YearlySyncForm from './YearlySyncForm';
 import ResetPreferencesButton from './ResetPreferencesButton';
 import PermissionWarning from './PermissionWarning';
+import DeleteAccountButton from './DeleteAccountButton';
 
 export const metadata = {
   title: 'Dashboard - Sirkadiyen',
@@ -348,6 +349,22 @@ export default async function DashboardPage() {
           <a href="/api/auth/signout" className="text-red-400 hover:text-red-300 transition-colors">
             Çıkış Yap
           </a>
+        </div>
+
+        {/* Account Settings Section */}
+        <div className="mt-8 bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700">
+          <h2 className="text-xl font-bold text-white mb-4">⚙️ Hesap Ayarları</h2>
+          
+          <div className="space-y-4">
+            <div className="bg-slate-900/50 rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-slate-300 mb-2">Tehlikeli Alan</h3>
+              <p className="text-slate-400 text-sm mb-4">
+                Hesabınızı kalıcı olarak silmek isterseniz aşağıdaki butonu kullanabilirsiniz. 
+                Bu işlem geri alınamaz ve tüm verileriniz silinecektir.
+              </p>
+              <DeleteAccountButton />
+            </div>
+          </div>
         </div>
       </div>
     </main>
