@@ -21,17 +21,20 @@ interface AddTransactionData {
   description?: string;
   userId?: string;
   accountId: string;
+  date?: Date | string;
+  status?: 'COMPLETED' | 'PENDING';
 }
 
 /**
  * Yeni finansal işlem ekler
  * Eğer işlem bir gelir ve kullanıcı seçilmişse, kullanıcının ödeme durumunu PAID yapar
+ * Status COMPLETED ise kasayı etkiler, PENDING ise sadece kayıt oluşturur
  */
 export async function addTransaction(data: AddTransactionData) {
   await checkAdmin();
 
   try {
-    const { amount, type, category, description, userId, accountId } = data;
+    const { amount, type, category, description, userId, accountId, date, status = 'COMPLETED' } = data;
 
     if (!amount || amount <= 0) {
       return { error: 'Geçerli bir tutar giriniz.' };
@@ -44,32 +47,36 @@ export async function addTransaction(data: AddTransactionData) {
       return { error: 'Hangi hesaba ait olduğunu seçiniz.' };
     }
 
-  const result = await prisma.$transaction(async (tx: any) => {
+    const result = await prisma.$transaction(async (tx: any) => {
       // Transaction oluştur
       const transaction = await tx.transaction.create({
         data: {
           amount,
           type: type as any,
+          status: status as any,
           category: category.trim(),
           description: description?.trim() || null,
           userId: userId || null,
           accountId,
+          date: date ? new Date(date) : new Date(),
         },
       });
 
-      // Bakiye güncelle
-      const sign = type === 'INCOME' ? 1 : -1; // DISTRIBUTION -> -1, EXPENSE -> -1
-      await tx.financialAccount.update({
-        where: { id: accountId },
-        data: { balance: { increment: sign * amount } },
-      });
-
-      // Eğer bu bir gelir ve kullanıcı belirtilmişse, ödeme durumunu güncelle
-      if (type === 'INCOME' && userId) {
-        await tx.user.update({
-          where: { id: userId },
-          data: { paymentStatus: 'PAID' },
+      // Bakiye güncelle - Sadece COMPLETED durumundaki işlemler kasayı etkiler
+      if (status === 'COMPLETED') {
+        const sign = type === 'INCOME' ? 1 : -1; // DISTRIBUTION -> -1, EXPENSE -> -1
+        await tx.financialAccount.update({
+          where: { id: accountId },
+          data: { balance: { increment: sign * amount } },
         });
+
+        // Eğer bu bir gelir ve kullanıcı belirtilmişse, ödeme durumunu güncelle
+        if (type === 'INCOME' && userId) {
+          await tx.user.update({
+            where: { id: userId },
+            data: { paymentStatus: 'PAID' },
+          });
+        }
       }
 
       return transaction;
@@ -77,10 +84,10 @@ export async function addTransaction(data: AddTransactionData) {
 
     // Audit log kaydı
     const logDetails = type === 'INCOME' 
-      ? `Gelir eklendi: ${amount} TL - ${category}` 
+      ? `Gelir eklendi: ${amount} TL - ${category} (${status})` 
       : type === 'EXPENSE'
-      ? `Gider eklendi: ${amount} TL - ${category}`
-      : `Kâr dağıtımı: ${amount} TL - ${category}`;
+      ? `Gider eklendi: ${amount} TL - ${category} (${status})`
+      : `Kâr dağıtımı: ${amount} TL - ${category} (${status})`;
     await logAdminAction(
       type === 'INCOME' ? 'MONEY_COLLECTED' : 'EXPENSE_ADDED',
       logDetails,
@@ -103,7 +110,7 @@ export async function updateTransaction(id: string, data: Partial<AddTransaction
   await checkAdmin();
 
   try {
-    const { amount, type, category, description, userId, accountId } = data;
+    const { amount, type, category, description, userId, accountId, date, status } = data;
 
     // Mevcut işlemi getir
     const existingTransaction = await prisma.transaction.findUnique({
@@ -115,13 +122,14 @@ export async function updateTransaction(id: string, data: Partial<AddTransaction
       return { error: 'İşlem bulunamadı.' };
     }
 
-    // Eğer tutar veya hesap değişiyorsa bakiye güncellemesi gerekir
+    // Eğer tutar, hesap veya durum değişiyorsa bakiye güncellemesi gerekir
     const amountChanged = amount !== undefined && amount !== existingTransaction.amount;
     const accountChanged = accountId !== undefined && accountId !== existingTransaction.accountId;
+    const statusChanged = status !== undefined && status !== existingTransaction.status;
 
     await prisma.$transaction(async (tx: any) => {
-      // Eski bakiyeyi geri al
-      if (amountChanged || accountChanged) {
+      // Eski bakiyeyi geri al (sadece COMPLETED işlemler kasayı etkiliyordu)
+      if ((amountChanged || accountChanged || statusChanged) && existingTransaction.status === 'COMPLETED') {
         const oldSign = existingTransaction.type === 'INCOME' ? -1 : 1;
         await tx.financialAccount.update({
           where: { id: existingTransaction.accountId },
@@ -135,15 +143,18 @@ export async function updateTransaction(id: string, data: Partial<AddTransaction
         data: {
           ...(amount !== undefined && { amount }),
           ...(type !== undefined && { type: type as any }),
+          ...(status !== undefined && { status: status as any }),
           ...(category !== undefined && { category: category.trim() }),
           ...(description !== undefined && { description: description?.trim() || null }),
           ...(userId !== undefined && { userId: userId || null }),
           ...(accountId !== undefined && { accountId }),
+          ...(date !== undefined && { date: new Date(date) }),
         },
       });
 
-      // Yeni bakiyeyi uygula
-      if (amountChanged || accountChanged) {
+      // Yeni bakiyeyi uygula (sadece COMPLETED işlemler kasayı etkiler)
+      const newStatus = status ?? existingTransaction.status;
+      if ((amountChanged || accountChanged || statusChanged) && newStatus === 'COMPLETED') {
         const newAmount = amount ?? existingTransaction.amount;
         const newType = type ?? existingTransaction.type;
         const newAccountId = accountId ?? existingTransaction.accountId;
@@ -167,15 +178,38 @@ export async function updateTransaction(id: string, data: Partial<AddTransaction
 
 /**
  * Finansal işlemi siler
+ * Eğer işlem COMPLETED durumundaysa, bakiyeyi geri alır
  */
 export async function deleteTransaction(id: string) {
   await checkAdmin();
 
   try {
-    await prisma.transaction.delete({
+    // İşlemi getir
+    const transaction = await prisma.transaction.findUnique({
       where: { id },
     });
 
+    if (!transaction) {
+      return { error: 'İşlem bulunamadı.' };
+    }
+
+    await prisma.$transaction(async (tx: any) => {
+      // İşlemi sil
+      await tx.transaction.delete({
+        where: { id },
+      });
+
+      // Eğer COMPLETED işlemse, bakiyeyi geri al
+      if (transaction.status === 'COMPLETED' && transaction.type !== 'TRANSFER') {
+        const sign = transaction.type === 'INCOME' ? -1 : 1;
+        await tx.financialAccount.update({
+          where: { id: transaction.accountId },
+          data: { balance: { increment: sign * transaction.amount } },
+        });
+      }
+    });
+
+    await logAdminAction('TRANSACTION_DELETED', `İşlem silindi: ${transaction.category}`, id);
     revalidatePath('/admin/finance');
     return { success: 'İşlem başarıyla silindi.' };
   } catch (error) {
@@ -186,6 +220,7 @@ export async function deleteTransaction(id: string) {
 
 /**
  * Finansal istatistikleri hesaplar ve döner
+ * Sadece COMPLETED işlemler toplam hesaplamaya dahil edilir
  */
 export async function getFinancialStats() {
   await checkAdmin();
@@ -209,14 +244,14 @@ export async function getFinancialStats() {
       prisma.financialAccount.findMany({ orderBy: { name: 'asc' } }),
     ]);
 
-    // Toplam gelir
+    // Toplam gelir - Sadece COMPLETED işlemler
     const totalIncome = transactions
-      .filter((t: any) => t.type === 'INCOME')
+      .filter((t: any) => t.type === 'INCOME' && t.status === 'COMPLETED')
       .reduce((sum: number, t: any) => sum + t.amount, 0);
 
-    // Toplam gider
+    // Toplam gider - Sadece COMPLETED işlemler
     const totalExpense = transactions
-      .filter((t: any) => t.type === 'EXPENSE' || t.type === 'DISTRIBUTION')
+      .filter((t: any) => (t.type === 'EXPENSE' || t.type === 'DISTRIBUTION') && t.status === 'COMPLETED')
       .reduce((sum: number, t: any) => sum + t.amount, 0);
 
     // Net kasa
@@ -355,5 +390,134 @@ export async function searchUsers(query: string) {
   } catch (error) {
     console.error('Kullanıcı arama hatası:', error);
     return [];
+  }
+}
+
+/**
+ * İşlem durumunu değiştirir: PENDING <-> COMPLETED
+ * Durum değiştiğinde bakiye de buna göre güncellenir
+ */
+export async function toggleTransactionStatus(id: string) {
+  await checkAdmin();
+
+  try {
+    const transaction = await prisma.transaction.findUnique({
+      where: { id },
+      include: { account: true },
+    });
+
+    if (!transaction) {
+      return { error: 'İşlem bulunamadı.' };
+    }
+
+    // Transfer işlemlerinin durumu değiştirilemez
+    if (transaction.type === 'TRANSFER') {
+      return { error: 'Transfer işlemlerinin durumu değiştirilemez.' };
+    }
+
+    const newStatus = transaction.status === 'COMPLETED' ? 'PENDING' : 'COMPLETED';
+
+    await prisma.$transaction(async (tx: any) => {
+      // Durumu güncelle
+      await tx.transaction.update({
+        where: { id },
+        data: { status: newStatus as any },
+      });
+
+      // Bakiye güncellemesi
+      const sign = transaction.type === 'INCOME' ? 1 : -1;
+      const balanceChange = newStatus === 'COMPLETED' 
+        ? sign * transaction.amount  // PENDING -> COMPLETED: Kasaya ekle/çıkar
+        : -sign * transaction.amount; // COMPLETED -> PENDING: Kasadan geri al
+
+      await tx.financialAccount.update({
+        where: { id: transaction.accountId },
+        data: { balance: { increment: balanceChange } },
+      });
+
+      // Eğer gelir işlemi COMPLETED'a çevriliyorsa ve kullanıcı varsa, ödeme durumunu güncelle
+      if (transaction.type === 'INCOME' && transaction.userId && newStatus === 'COMPLETED') {
+        await tx.user.update({
+          where: { id: transaction.userId },
+          data: { paymentStatus: 'PAID' },
+        });
+      }
+    });
+
+    await logAdminAction(
+      'TRANSACTION_STATUS_CHANGED',
+      `İşlem durumu değiştirildi: ${transaction.category} - ${transaction.status} -> ${newStatus}`,
+      id
+    );
+
+    revalidatePath('/admin/finance');
+    return { success: `İşlem durumu ${newStatus === 'COMPLETED' ? 'Tamamlandı' : 'Bekliyor'} olarak güncellendi.` };
+  } catch (error) {
+    console.error('Durum değiştirme hatası:', error);
+    return { error: 'Durum değiştirilirken bir hata oluştu.' };
+  }
+}
+
+/**
+ * Belirtilen yılın aylık bilançosunu döner
+ * Her ay için: income, expense, payables, receivables
+ */
+export async function getMonthlyBalanceSheet(year: number) {
+  await checkAdmin();
+
+  try {
+    // Yılın başlangıç ve bitiş tarihleri
+    const startDate = new Date(year, 0, 1); // 1 Ocak
+    const endDate = new Date(year + 1, 0, 1); // 1 Ocak (bir sonraki yıl)
+
+    // Yılın tüm işlemlerini getir
+    const transactions = await prisma.transaction.findMany({
+      where: {
+        date: {
+          gte: startDate,
+          lt: endDate,
+        },
+        type: {
+          not: 'TRANSFER', // Transfer işlemlerini hariç tut
+        },
+      },
+      orderBy: { date: 'asc' },
+    });
+
+    // 12 aylık veri yapısı oluştur
+    const monthlyData = Array.from({ length: 12 }, (_, index) => ({
+      month: index + 1,
+      monthName: new Date(year, index, 1).toLocaleDateString('tr-TR', { month: 'long' }),
+      income: 0,
+      expense: 0,
+      payables: 0,
+      receivables: 0,
+    }));
+
+    // İşlemleri aylara göre kategorize et
+    transactions.forEach((transaction: any) => {
+      const month = new Date(transaction.date).getMonth(); // 0-11
+      const isIncome = transaction.type === 'INCOME';
+      const isExpense = transaction.type === 'EXPENSE' || transaction.type === 'DISTRIBUTION';
+
+      if (transaction.status === 'COMPLETED') {
+        if (isIncome) {
+          monthlyData[month].income += transaction.amount;
+        } else if (isExpense) {
+          monthlyData[month].expense += transaction.amount;
+        }
+      } else if (transaction.status === 'PENDING') {
+        if (isIncome) {
+          monthlyData[month].receivables += transaction.amount;
+        } else if (isExpense) {
+          monthlyData[month].payables += transaction.amount;
+        }
+      }
+    });
+
+    return monthlyData;
+  } catch (error) {
+    console.error('Aylık bilanço hesaplama hatası:', error);
+    throw error;
   }
 }
