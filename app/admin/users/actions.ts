@@ -71,13 +71,25 @@ export async function unbanUser(userId: string) {
 export async function deleteUser(userId: string) {
   await checkAdmin();
   try {
-    // 1. Account kaydını bul
+    // 1. Önce kullanıcının takvimini temizle
+    try {
+      const wipeResult = await wipeUserCalendar(userId);
+      if (wipeResult.error) {
+        console.warn('Takvim temizleme hatası (devam ediliyor):', wipeResult.error);
+      } else if (wipeResult.success) {
+        console.log(`Takvim temizlendi: ${wipeResult.deleted} etkinlik silindi.`);
+      }
+    } catch (calendarError) {
+      console.warn('Takvim temizleme hatası (devam ediliyor):', calendarError);
+    }
+
+    // 2. Account kaydını bul
     const account = await prisma.account.findFirst({ where: { userId: userId } });
     if (account && account.refresh_token) {
-      // 2. Token'ı deşifre et
+      // 3. Token'ı deşifre et
       const decryptedToken = decrypt(account.refresh_token);
       if (decryptedToken) {
-        // 3. Google revoke endpoint'ine isteği gönder
+        // 4. Google revoke endpoint'ine isteği gönder
         try {
           const res = await fetch('https://oauth2.googleapis.com/revoke', {
             method: 'POST',
@@ -96,7 +108,7 @@ export async function deleteUser(userId: string) {
         }
       }
     }
-    // 4. Kullanıcıyı sil
+    // 5. Kullanıcıyı sil
     await prisma.user.delete({ where: { id: userId } });
     
     // Audit log kaydı
@@ -252,4 +264,113 @@ export async function updateAdminNotes(userId: string, notes: string) {
   revalidatePath('/admin/users');
   
   return { success: true };
+}
+
+/**
+ * Kullanıcının takvimindeki etkinlikleri belirli bir ay için getirir
+ * @param userId - Kullanıcı ID
+ * @param month - Ay (1-12)
+ * @param year - Yıl
+ */
+export async function fetchUserCalendarEvents(userId: string, month: number, year: number) {
+  await checkAdmin();
+
+  if (!userId) {
+    return { error: 'Kullanıcı ID gerekli.' };
+  }
+
+  try {
+    const { getAccessToken, listSirkadiyenEvents } = await import('@/lib/google-calendar');
+
+    // Ay başlangıç ve bitiş tarihlerini hesapla
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59);
+
+    const timeMin = startDate.toISOString();
+    const timeMax = endDate.toISOString();
+
+    // Access token al
+    const accessToken = await getAccessToken(userId);
+
+    // Sirkadiyen etkinliklerini listele
+    const events = await listSirkadiyenEvents(accessToken, timeMin, timeMax);
+
+    return { 
+      success: true, 
+      events,
+      count: events.length 
+    };
+  } catch (error: any) {
+    console.error('Takvim etkinlikleri getirme hatası:', error);
+    return { 
+      error: error.message || 'Takvim etkinlikleri getirilirken bir hata oluştu.' 
+    };
+  }
+}
+
+/**
+ * Kullanıcının takvimindeki tüm Sirkadiyen etkinliklerini siler
+ * @param userId - Kullanıcı ID
+ */
+export async function wipeUserCalendar(userId: string) {
+  await checkAdmin();
+
+  if (!userId) {
+    return { error: 'Kullanıcı ID gerekli.' };
+  }
+
+  try {
+    const { getAccessToken, listSirkadiyenEvents, batchDeleteEvents } = await import('@/lib/google-calendar');
+
+    // Geniş bir tarih aralığı belirle (son 1 yıl + gelecek 1 yıl)
+    const now = new Date();
+    const oneYearAgo = new Date(now);
+    oneYearAgo.setFullYear(now.getFullYear() - 1);
+    const oneYearLater = new Date(now);
+    oneYearLater.setFullYear(now.getFullYear() + 1);
+
+    const timeMin = oneYearAgo.toISOString();
+    const timeMax = oneYearLater.toISOString();
+
+    // Access token al
+    const accessToken = await getAccessToken(userId);
+
+    // Tüm Sirkadiyen etkinliklerini getir
+    const events = await listSirkadiyenEvents(accessToken, timeMin, timeMax);
+
+    if (events.length === 0) {
+      return { 
+        success: true, 
+        message: 'Silinecek etkinlik bulunamadı.',
+        deleted: 0 
+      };
+    }
+
+    // Etkinlik ID'lerini topla
+    const eventIds = events.map(e => e.id);
+
+    // Batch silme işlemini yap
+    const result = await batchDeleteEvents(accessToken, eventIds);
+
+    // Audit log kaydı
+    await logAdminAction(
+      'CALENDAR_WIPED', 
+      `${result.success} etkinlik silindi, ${result.failed} başarısız.`,
+      userId
+    );
+
+    revalidatePath(`/admin/users/${userId}`);
+
+    return { 
+      success: true, 
+      message: `Takvim temizlendi. ${result.success} etkinlik silindi.`,
+      deleted: result.success,
+      failed: result.failed
+    };
+  } catch (error: any) {
+    console.error('Takvim silme hatası:', error);
+    return { 
+      error: error.message || 'Takvim silinirken bir hata oluştu.' 
+    };
+  }
 }

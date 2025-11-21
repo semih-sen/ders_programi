@@ -4,6 +4,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { resetYearlySync, manuallyActivateUser } from '../actions';
+import CalendarManager from './CalendarManager';
 
 interface UserDetailPageProps {
   params: { id: string };
@@ -173,7 +174,7 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
       </div>
 
       {/* Seçtiği Dersler Tablosu */}
-      <div className="bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden">
+      <div className="bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden mb-8">
         <div className="p-6 border-b border-slate-700">
           <h2 className="text-lg font-semibold text-white">Seçtiği Dersler</h2>
           <p className="text-slate-400 text-sm mt-1">Kullanıcının abonelik tercihleri</p>
@@ -209,6 +210,9 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
           </table>
         </div>
       </div>
+
+      {/* Google Takvim Yönetimi */}
+      <CalendarManager userId={user.id} />
 
       <div className="mt-8">
         <Link href="/admin/users" className="text-sm text-blue-400 hover:text-blue-300 underline">← Tüm kullanıcılara dön</Link>
