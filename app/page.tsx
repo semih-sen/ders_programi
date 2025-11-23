@@ -2,6 +2,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from './api/auth/[...nextauth]/options';
 import Link from 'next/link';
 import Image from 'next/image';
+import MadeInCapa from './components/MadeInCapa';
 
 export default async function Home() {
   const session = await getServerSession(authOptions);
@@ -115,6 +116,8 @@ export default async function Home() {
           </div>
         </div>
       </div>
+      {/* Aidiyet Rozeti */}
+      <MadeInCapa />
     </main>
   );
 }
