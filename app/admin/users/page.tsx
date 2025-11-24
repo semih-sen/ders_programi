@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { BanButton, DeleteButton, RoleButton, PaymentStatusButton } from './UserActions';
 import SearchInput from './SearchInput';
 import { manuallyActivateUser } from './actions';
+import { redirect } from 'next/navigation';
 
 export const metadata = {
   title: 'Kullanıcı Yönetimi',
@@ -11,38 +12,75 @@ export const metadata = {
 interface UsersPageProps {
   searchParams?: {
     query?: string;
+    page?: string;
+    grade?: string; // class year filter
   };
 }
 
-export default async function UsersPage({ searchParams }: UsersPageProps) {
-  const query = searchParams?.query || '';
+const PAGE_SIZE = 10;
 
-  const users = await prisma.user.findMany({
-    where: query ? {
-      OR: [
-        { name: { contains: query, mode: 'insensitive' } },
-        { email: { contains: query, mode: 'insensitive' } },
-      ],
-    } : undefined,
-    orderBy: { createdAt: 'desc' },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      isActivated: true,
-      isBanned: true,
-      banReason: true,
-      createdAt: true,
-      adminNotes: true,
-      paymentStatus: true,
-      accounts: {
-        select: {
-          scope: true,
+export default async function UsersPage({ searchParams }: UsersPageProps) {
+  const query = searchParams?.query?.trim() || '';
+  const pageParam = parseInt(searchParams?.page || '1', 10);
+  const currentPage = Number.isNaN(pageParam) || pageParam < 1 ? 1 : pageParam;
+  const gradeParam = searchParams?.grade?.trim();
+  const gradeFilter = gradeParam ? parseInt(gradeParam, 10) : undefined;
+  if (gradeParam && Number.isNaN(gradeFilter)) {
+    // Invalid grade param: redirect to page 1 without grade
+    redirect('/admin/users');
+  }
+
+  const whereClause: any = {};
+  if (query) {
+    whereClause.OR = [
+      { name: { contains: query, mode: 'insensitive' } },
+      { email: { contains: query, mode: 'insensitive' } },
+    ];
+  }
+  if (gradeFilter !== undefined) {
+    whereClause.classYear = gradeFilter;
+  }
+
+  const [users, totalCount] = await Promise.all([
+    prisma.user.findMany({
+      where: Object.keys(whereClause).length ? whereClause : undefined,
+      orderBy: { createdAt: 'desc' },
+      skip: (currentPage - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        isActivated: true,
+        isBanned: true,
+        banReason: true,
+        createdAt: true,
+        adminNotes: true,
+        paymentStatus: true,
+        accounts: {
+          select: {
+            scope: true,
+          },
         },
+        classYear: true,
       },
-    },
-  });
+    }),
+    prisma.user.count({ where: Object.keys(whereClause).length ? whereClause : undefined }),
+  ]);
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const isFirstPage = currentPage <= 1;
+  const isLastPage = currentPage >= totalPages;
+
+  function buildUrl(params: Record<string, string | number | undefined>) {
+    const sp = new URLSearchParams();
+    if (params.query) sp.set('query', String(params.query));
+    if (params.grade) sp.set('grade', String(params.grade));
+    if (params.page) sp.set('page', String(params.page));
+    const queryString = sp.toString();
+    return `/admin/users${queryString ? `?${queryString}` : ''}`;
+  }
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -56,19 +94,44 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
         <SearchInput />
       </div>
 
-      {/* Kullanıcı Sayısı */}
-      <div className="mb-4">
+      {/* Dönem (Sınıf) Filtre Sekmeleri */}
+      <div className="mb-6 flex flex-wrap gap-2">
+        {[
+          { label: 'Tümü', value: undefined },
+          { label: 'Dönem 1', value: 1 },
+          { label: 'Dönem 2', value: 2 },
+          { label: 'Dönem 3', value: 3 },
+        ].map(tab => {
+          const active = gradeFilter === tab.value || (tab.value === undefined && gradeFilter === undefined);
+          return (
+            <Link
+              key={tab.label}
+              href={buildUrl({ grade: tab.value, page: 1, query })}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors border ${active ? 'bg-blue-600 text-white border-blue-500' : 'bg-slate-800/60 text-slate-300 border-slate-700 hover:bg-slate-700/60'}`}
+            >
+              {tab.label}
+            </Link>
+          );
+        })}
+      </div>
+
+      {/* Kullanıcı Sayısı & Sayfalama Bilgisi */}
+      <div className="mb-4 flex flex-col gap-1">
         <p className="text-slate-400 text-sm">
           {query ? (
             <>
-              <span className="text-white font-semibold">{users.length}</span> kullanıcı bulundu
+              <span className="text-white font-semibold">{totalCount}</span> sonuç bulundu
               <span className="text-slate-500 mx-2">•</span>
               Arama: "<span className="text-blue-400">{query}</span>"
             </>
           ) : (
-            <>Toplam <span className="text-white font-semibold">{users.length}</span> kullanıcı</>
+            <>Toplam <span className="text-white font-semibold">{totalCount}</span> kullanıcı</>
+          )}
+          {gradeFilter !== undefined && (
+            <span className="ml-2 text-xs text-slate-500">(Dönem {gradeFilter} filtresi)</span>
           )}
         </p>
+        <p className="text-xs text-slate-500">Sayfa {currentPage} / {totalPages}</p>
       </div>
 
       <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl border border-slate-700 overflow-hidden">
@@ -206,6 +269,29 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
               )}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      {/* Sayfalama Kontrolleri */}
+      <div className="mt-6 flex items-center justify-between bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+        <div className="flex items-center gap-2">
+          <Link
+            aria-disabled={isFirstPage}
+            className={`px-4 py-2 rounded-md text-sm font-medium border transition-colors ${isFirstPage ? 'opacity-40 cursor-not-allowed border-slate-700 bg-slate-800 text-slate-500' : 'bg-slate-700/60 hover:bg-slate-600/60 text-white border-slate-600'}`}
+            href={isFirstPage ? '#' : buildUrl({ grade: gradeFilter, page: currentPage - 1, query })}
+          >
+            ← Önceki
+          </Link>
+          <Link
+            aria-disabled={isLastPage}
+            className={`px-4 py-2 rounded-md text-sm font-medium border transition-colors ${isLastPage ? 'opacity-40 cursor-not-allowed border-slate-700 bg-slate-800 text-slate-500' : 'bg-slate-700/60 hover:bg-slate-600/60 text-white border-slate-600'}`}
+            href={isLastPage ? '#' : buildUrl({ grade: gradeFilter, page: currentPage + 1, query })}
+          >
+            Sonraki →
+          </Link>
+        </div>
+        <div className="text-xs text-slate-400">
+          Sayfa {currentPage} / {totalPages}
         </div>
       </div>
     </div>

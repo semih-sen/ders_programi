@@ -374,3 +374,97 @@ export async function wipeUserCalendar(userId: string) {
     };
   }
 }
+
+/**
+ * Kullanıcının Google Takvimine manuel, tek seferlik bir uyarı / etkinlik ekler.
+ * @param userId - Etkinliğin ekleneceği kullanıcı
+ * @param eventData - Etkinlik verileri (başlık, açıklama, tarih (YYYY-MM-DD), colorId)
+ */
+export async function sendManualEvent(
+  userId: string,
+  eventData: { title: string; description: string; date: string; colorId: string }
+) {
+  await checkAdmin();
+
+  if (!userId) {
+    return { error: 'Kullanıcı ID gerekli.' } as const;
+  }
+  if (!eventData?.title || !eventData?.date) {
+    return { error: 'Etkinlik başlığı ve tarihi zorunludur.' } as const;
+  }
+
+  try {
+    const account = await prisma.account.findFirst({
+      where: { userId, provider: 'google' },
+      select: { refresh_token: true },
+    });
+
+    if (!account?.refresh_token) {
+      return { error: 'Kullanıcının Google hesabı veya refresh token bulunamadı.' } as const;
+    }
+
+    // Refresh token'ı deşifre et
+    const decrypted = decrypt(account.refresh_token);
+    if (!decrypted) {
+      return { error: 'Refresh token deşifre edilemedi.' } as const;
+    }
+
+    // Yeni access token al
+    const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: process.env.GOOGLE_CLIENT_ID || '',
+        client_secret: process.env.GOOGLE_CLIENT_SECRET || '',
+        refresh_token: decrypted,
+        grant_type: 'refresh_token',
+      }),
+    });
+    if (!tokenRes.ok) {
+      const t = await tokenRes.text();
+      console.error('Manual event token error:', t);
+      return { error: 'Access token alınamadı.' } as const;
+    }
+    const tokenJson = await tokenRes.json();
+    const accessToken = tokenJson.access_token;
+
+    // Etkinlik isteği
+    const eventBody = {
+      summary: eventData.title,
+      description: eventData.description || '',
+      start: { date: eventData.date }, // Tüm gün etkinlik
+      end: { date: eventData.date },
+      colorId: eventData.colorId || '11', // Varsayılan kırmızı
+      transparency: 'transparent',
+    };
+
+    const createRes = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(eventBody),
+    });
+
+    if (!createRes.ok) {
+      const errTxt = await createRes.text();
+      console.error('Manual event create error:', errTxt);
+      return { error: 'Etkinlik oluşturulamadı.' } as const;
+    }
+
+    // Audit log
+    await logAdminAction(
+      'MANUAL_EVENT_SENT',
+      `Başlık: ${eventData.title} • Tarih: ${eventData.date}`,
+      userId
+    );
+
+    // Kullanıcı detay sayfasını yeniden doğrula
+    revalidatePath(`/admin/users/${userId}`);
+    return { success: 'Etkinlik başarıyla eklendi.' } as const;
+  } catch (error: any) {
+    console.error('Manual event error:', error);
+    return { error: error.message || 'Etkinlik gönderilirken hata oluştu.' } as const;
+  }
+}
