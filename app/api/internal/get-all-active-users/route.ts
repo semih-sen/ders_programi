@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { decrypt } from '@/lib/crypto';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/internal/get-all-active-users
  * 

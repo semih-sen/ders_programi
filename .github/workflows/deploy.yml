@@ -12,6 +12,9 @@ jobs:
     # 'self-hosted' dediğimizde, sizin sunucunuzdaki runner'a gider.
     runs-on: self-hosted
 
+    env:
+      NODE_OPTIONS: "--dns-result-order=ipv4first"
+
     # Projenin sunucuda bulunduğu dizini buraya yazın
     # Bu, 'ghrunner' kullanıcısının ev dizinindeki proje yolu olmalı
     defaults:
