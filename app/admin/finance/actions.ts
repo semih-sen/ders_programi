@@ -329,14 +329,13 @@ export async function getFinanceReport(startDate: Date, endDate: Date) {
       }
     });
 
-    // 2. DÖNEM İÇİ İŞLEMLER
+    // 2. DÖNEM İÇİ İŞLEMLER (Virmanlar dahil)
     const periodTransactions = await prisma.transaction.findMany({
       where: {
         date: {
           gte: startDate,
           lte: endDate,
         },
-        type: { not: 'TRANSFER' },
       },
       orderBy: { date: 'desc' },
       include: {
@@ -352,21 +351,35 @@ export async function getFinanceReport(startDate: Date, endDate: Date) {
       },
     });
 
-    // 3. DÖNEM GELİRLERİ
-    const periodIncomeCompleted = periodTransactions
+    // Virman işlemleri için ilgili hesap bilgilerini alalım
+    const transactionsWithRelatedAccount = await Promise.all(
+      periodTransactions.map(async (t: any) => {
+        if (t.type === 'TRANSFER' && t.relatedAccountId) {
+          const relatedAccount = await prisma.financialAccount.findUnique({
+            where: { id: t.relatedAccountId },
+            select: { id: true, name: true, type: true },
+          });
+          return { ...t, relatedAccount };
+        }
+        return t;
+      })
+    );
+
+    // 3. DÖNEM GELİRLERİ (Transfer hariç)
+    const periodIncomeCompleted = transactionsWithRelatedAccount
       .filter((t: any) => t.type === 'INCOME' && t.status === 'COMPLETED')
       .reduce((sum: number, t: any) => sum + t.amount, 0);
 
-    const periodIncomePending = periodTransactions
+    const periodIncomePending = transactionsWithRelatedAccount
       .filter((t: any) => t.type === 'INCOME' && t.status === 'PENDING')
       .reduce((sum: number, t: any) => sum + t.amount, 0);
 
-    // 4. DÖNEM GİDERLERİ
-    const periodExpenseCompleted = periodTransactions
+    // 4. DÖNEM GİDERLERİ (Transfer hariç)
+    const periodExpenseCompleted = transactionsWithRelatedAccount
       .filter((t: any) => (t.type === 'EXPENSE' || t.type === 'DISTRIBUTION') && t.status === 'COMPLETED')
       .reduce((sum: number, t: any) => sum + t.amount, 0);
 
-    const periodExpensePending = periodTransactions
+    const periodExpensePending = transactionsWithRelatedAccount
       .filter((t: any) => (t.type === 'EXPENSE' || t.type === 'DISTRIBUTION') && t.status === 'PENDING')
       .reduce((sum: number, t: any) => sum + t.amount, 0);
 
@@ -375,9 +388,10 @@ export async function getFinanceReport(startDate: Date, endDate: Date) {
     const currentBalance = openingBalance + netChange; // Bugünkü kasa (gerçekleşen işlemler)
     const projectedClosing = currentBalance + periodIncomePending - periodExpensePending; // Tahmini dönem sonu
 
-    // 6. KATEGORİ BAZLI DAĞILIM (Dönem içi)
+    // 6. KATEGORİ BAZLI DAĞILIM (Dönem içi, Transfer hariç)
     const categoryBreakdown: Record<string, number> = {};
-    periodTransactions.forEach((t: any) => {
+    transactionsWithRelatedAccount.forEach((t: any) => {
+      if (t.type === 'TRANSFER') return; // Transferleri kategorizasyondan hariç tut
       if (!categoryBreakdown[t.category]) {
         categoryBreakdown[t.category] = 0;
       }
@@ -409,7 +423,7 @@ export async function getFinanceReport(startDate: Date, endDate: Date) {
       projectedClosing,
       
       // İşlemler ve hesaplar
-      transactions: periodTransactions,
+      transactions: transactionsWithRelatedAccount,
       accounts,
       
       // Kategori dağılımı

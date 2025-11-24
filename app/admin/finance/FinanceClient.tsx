@@ -23,6 +23,11 @@ interface Transaction {
     type: string;
   };
   relatedAccountId?: string | null;
+  relatedAccount?: {
+    id: string;
+    name: string;
+    type: string;
+  } | null;
 }
 
 interface FinanceClientProps {
@@ -289,7 +294,14 @@ export default function FinanceClient({ transactions, accounts, periodLabel }: F
                       {transaction.category}
                     </td>
                     <td className="px-4 sm:px-6 py-3 text-sm text-slate-300">
-                      {transaction.description || '-'}
+                      {transaction.type === 'TRANSFER' && transaction.relatedAccount ? (
+                        <span className="text-blue-400">
+                          → {transaction.relatedAccount.name}
+                          {transaction.description && ` (${transaction.description})`}
+                        </span>
+                      ) : (
+                        transaction.description || '-'
+                      )}
                     </td>
                     <td className="px-4 sm:px-6 py-3 text-sm text-slate-300">
                       {transaction.user ? (

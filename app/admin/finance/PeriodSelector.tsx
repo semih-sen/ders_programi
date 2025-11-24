@@ -70,7 +70,7 @@ export default function PeriodSelector({ period }: PeriodSelectorProps) {
   const isCustomView = period.view === 'custom';
 
   return (
-    <div className="relative z-[100]">
+    <div className="relative z-10">
       <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl border border-slate-700 p-4 flex items-center justify-between">
         {/* Önceki Buton */}
         <button
@@ -132,10 +132,10 @@ export default function PeriodSelector({ period }: PeriodSelectorProps) {
           {showMenu && (
             <>
               <div 
-                className="fixed inset-0 z-[1000]" 
+                className="fixed inset-0 z-20" 
                 onClick={() => setShowMenu(false)}
               />
-              <div className="absolute right-0 mt-2 w-64 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-[1001] overflow-hidden">
+              <div className="absolute right-0 mt-2 w-64 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-30 overflow-hidden">
                 <button
                   onClick={switchToMonthly}
                   className="w-full px-4 py-3 text-left hover:bg-slate-700 transition-colors border-b border-slate-700 flex items-center gap-3"
@@ -179,7 +179,7 @@ export default function PeriodSelector({ period }: PeriodSelectorProps) {
 
       {/* Özel Tarih Aralığı Modal */}
       {showCustomDatePicker && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[2000] p-4">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-40 p-4">
           <div className="bg-slate-800 rounded-xl border border-slate-700 w-full max-w-md">
             <div className="p-6 border-b border-slate-700 flex justify-between items-center">
               <h3 className="text-xl font-bold text-white">Özel Tarih Aralığı</h3>

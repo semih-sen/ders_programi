@@ -30,7 +30,7 @@ jobs:
       - name: 2. Node.js Sürümünü Ayarla
         uses: actions/setup-node@v4
         with:
-          node-version: '25' # Sunucunuzdaki sürümle aynı olsun
+          node-version: '22.11' # Sunucunuzdaki sürümle aynı olsun
 
       - name: 3. Yeni Kodu Proje Dizinine Kopyala (rsync)
         # $GITHUB_WORKSPACE'teki kodu asıl proje dizinimize kopyalıyoruz
