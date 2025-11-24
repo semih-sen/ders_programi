@@ -17,7 +17,7 @@ interface UsersPageProps {
   };
 }
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 32;
 
 export default async function UsersPage({ searchParams }: UsersPageProps) {
   const query = searchParams?.query?.trim() || '';
