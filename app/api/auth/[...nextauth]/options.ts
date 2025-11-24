@@ -14,8 +14,10 @@ export const authOptions: NextAuthOptions = {
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       httpOptions:{
-        timeout:5000
+        timeout:5000,
+        
       },
+      
       allowDangerousEmailAccountLinking:true,
       authorization: {
         params: {
@@ -37,7 +39,11 @@ export const authOptions: NextAuthOptions = {
             // "https://www.googleapis.com/auth/drive.file",
           ].join(" "),
         },
+        url: "https://accounts.google.com/o/oauth2/v2/auth"
       },
+      token: "https://oauth2.googleapis.com/token",
+      userinfo: "https://openidconnect.googleapis.com/v1/userinfo",
+      issuer: "https://accounts.google.com",
     }),
   ],
 
