@@ -105,7 +105,9 @@ export async function POST(request: Request) {
         language: user.language,
         uygulamaGrubu: user.uygulamaGrubu,
         anatomiGrubu: user.anatomiGrubu,
-        yemekhaneEklensin: user.yemekhaneEklensin
+        yemekhaneEklensin: user.yemekhaneEklensin,
+        notificationOffset: user.notificationOffset,
+        firstLessonOffset: user.firstLessonOffset
       },
       
       // Course Subscriptions
