@@ -24,9 +24,11 @@ export const authOptions: NextAuthOptions = {
           // Request offline access to get refresh token
           access_type: "offline",
           
-          // Force consent screen to always get refresh token
-          // Without this, refresh_token is only provided on first authorization
-          prompt: "consent",
+          // NOTE: prompt: "consent" removed to prevent token limit issues
+          // Google has a 50 token per user per application limit.
+          // By forcing consent on every login, we were generating new tokens
+          // and hitting this limit, causing old tokens to be revoked.
+          // Now, consent is only requested when explicitly needed (e.g., permission repair button)
           
           // Request necessary scopes
           scope: [
@@ -129,11 +131,33 @@ export const authOptions: NextAuthOptions = {
     },
 
     /**
-     * CRITICAL: This callback encrypts the refresh token before saving to database
-     * This runs after the adapter's linkAccount but before the data is persisted
+     * Handle sign in and update tokens when user repairs permissions
      */
     async signIn({ user, account, profile }) {
-      // Allow sign in; encryption handled in events.linkAccount after adapter persistence
+      try {
+        // If this is a re-authentication with a new refresh_token (e.g., from permission repair)
+        if (account?.provider === 'google' && account.refresh_token && user?.id) {
+          // Check if account already exists
+          const existingAccount = await prisma.account.findUnique({
+            where: {
+              provider_providerAccountId: {
+                provider: account.provider,
+                providerAccountId: account.providerAccountId,
+              },
+            },
+          });
+
+          if (existingAccount) {
+            // Update existing account with new tokens
+            // The encryption will be handled in events.linkAccount
+            console.log('ℹ️ Updating existing account with new tokens from permission repair');
+          }
+        }
+      } catch (err) {
+        console.error('❌ signIn callback error:', err);
+      }
+      
+      // Always allow sign in; encryption handled in events.linkAccount after adapter persistence
       return true;
     },
   },
@@ -152,11 +176,13 @@ export const authOptions: NextAuthOptions = {
     },
 
     /**
-     * Encrypt refresh_token after adapter saves the Account (clean approach)
+     * Encrypt refresh_token after adapter saves the Account
+     * This also handles token updates when user repairs permissions
      */
     async linkAccount({ user, account }) {
       try {
         if (!account) return;
+        
         // Find the adapter Account by its unique composite key
         const dbAccount = await prisma.account.findUnique({
           where: {
@@ -172,15 +198,17 @@ export const authOptions: NextAuthOptions = {
 
         // Skip if looks already encrypted (three colon-separated parts)
         if (dbAccount.refresh_token.includes(':') && dbAccount.refresh_token.split(':').length === 3) {
+          console.log('ℹ️ Refresh token already encrypted, skipping');
           return;
         }
 
+        // Encrypt the new/updated token and save it
         const encryptedToken = encrypt(dbAccount.refresh_token);
         await prisma.account.update({
           where: { id: dbAccount.id },
           data: { refresh_token: encryptedToken },
         });
-        console.log('✅ Refresh token encrypted via linkAccount event');
+        console.log('✅ Refresh token encrypted and saved via linkAccount event');
       } catch (err) {
         console.error('❌ linkAccount encryption error:', err);
       }

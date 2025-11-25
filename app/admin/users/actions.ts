@@ -690,3 +690,69 @@ export async function updateNotificationSettings(
     return { error: error.message || 'Ayarlar güncellenemedi.' } as const;
   }
 }
+
+/**
+ * Kullanıcı adına Yıllık Eşitleme n8n iş akışını manuel olarak tetikler
+ * Admin onarım aracı - Senkronizasyonu yarım kalan kullanıcılar için
+ * @param userId - Yıllık eşitleme tetiklenecek kullanıcının ID'si
+ */
+export async function forceYearlySync(userId: string) {
+  try {
+    await checkAdmin();
+
+    if (!userId) {
+      return { error: 'Kullanıcı ID gerekli.' } as const;
+    }
+
+    // Çevre değişkenini kontrol et
+    const webhookUrl = process.env.N8N_YEARLY_SYNC_WEBHOOK_URL;
+    if (!webhookUrl) {
+      return { error: 'N8N_YEARLY_SYNC_WEBHOOK_URL çevre değişkeni tanımlanmamış.' } as const;
+    }
+
+    const internalApiKey = process.env.N8N_INTERNAL_API_KEY;
+    if (!internalApiKey) {
+      return { error: 'N8N_INTERNAL_API_KEY çevre değişkeni tanımlanmamış.' } as const;
+    }
+
+    // n8n webhook'una POST isteği gönder
+    const response = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${internalApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userId: userId,
+        source: 'Admin_Force_Sync',
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('n8n yearly sync error:', errorText);
+      return { error: `n8n webhook hatası: ${response.status} ${response.statusText}` } as const;
+    }
+
+    // İstek başarılı - Kullanıcının hasYearlySynced durumunu güncelle
+    await prisma.user.update({
+      where: { id: userId },
+      data: { hasYearlySynced: true },
+    });
+
+    // Audit log kaydı
+    await logAdminAction(
+      'YEARLY_SYNC_FORCED',
+      'Admin tarafından yıllık eşitleme manuel olarak tetiklendi.',
+      userId
+    );
+
+    // Sayfayı yenile
+    revalidatePath(`/admin/users/${userId}`);
+
+    return { success: 'Yıllık eşitleme başarıyla tetiklendi.' } as const;
+  } catch (error: any) {
+    console.error('forceYearlySync error:', error);
+    return { error: error.message || 'Yıllık eşitleme tetiklenirken hata oluştu.' } as const;
+  }
+}

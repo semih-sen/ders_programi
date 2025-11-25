@@ -15,6 +15,7 @@ import {
   fetchUserCalendarEvents,
   updateNotificationSettings,
   updateCalendarReminders,
+  forceYearlySync,
 } from '../actions';
 import ManualEventCard from '@/app/admin/users/[id]/ManualEventCard';
 import CalendarToolsCard from '@/app/admin/users/[id]/CalendarToolsCard';
@@ -204,6 +205,9 @@ const QuickActionsCard = ({ user }: { user: any }) => (
       </form>
       <form action={async () => { 'use server'; await wipeUserCalendar(user.id); }}>
         <button type="submit" className="w-full px-3 py-2 text-xs font-semibold rounded-md bg-indigo-600/20 border border-indigo-500/30 text-indigo-300 hover:bg-indigo-600/30">Takvimi Temizle</button>
+      </form>
+      <form action={async () => { 'use server'; await forceYearlySync(user.id); }}>
+        <button type="submit" className="w-full px-3 py-2 text-xs font-semibold rounded-md bg-blue-600/20 border border-blue-500/30 text-blue-300 hover:bg-blue-600/30">Yıllık Eşitlemeyi Zorla</button>
       </form>
       <form action={async () => { 'use server'; await deleteUser(user.id); redirect('/admin/users'); }} className="col-span-2">
         <button type="submit" className="w-full px-3 py-2 text-xs font-semibold rounded-md bg-red-700/30 border border-red-600/40 text-red-300 hover:bg-red-700/50">Kullanıcıyı Sil</button>

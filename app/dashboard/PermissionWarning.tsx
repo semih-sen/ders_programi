@@ -38,10 +38,11 @@ export default function PermissionWarning({ hasCalendarPermission }: PermissionW
           {/* Düzeltme Butonu */}
           <button
             onClick={() => {
+              // Force consent screen to request new permissions and get a fresh refresh_token
+              // This is only triggered when user explicitly repairs permissions
               signIn('google', {
                 callbackUrl: '/dashboard',
-                prompt: 'consent', // İzin ekranını tekrar zorla
-                scope: 'openid email profile https://www.googleapis.com/auth/calendar.events.owned',
+                prompt: 'consent', // Force consent screen to get new refresh_token
               });
             }}
             className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white font-semibold rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
