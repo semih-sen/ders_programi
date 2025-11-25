@@ -39,6 +39,7 @@ export async function GET(request: NextRequest) {
             refresh_token: true
           }
         },
+        
         courseSubscriptions: {
           include: {
             course: {
@@ -84,7 +85,9 @@ export async function GET(request: NextRequest) {
           anatomiGrubu: user.anatomiGrubu,
           yemekhaneEklensin: user.yemekhaneEklensin,
           coursePreferences: coursePreferences,
-          language: user.language
+          language: user.language,
+          notificationOffset: user.notificationOffset,
+          firstLessonOffset: user.firstLessonOffset
         };
 
         processedUsers.push(n8nProfile);
