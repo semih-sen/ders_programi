@@ -13,6 +13,8 @@ import {
   deleteUser,
   wipeUserCalendar,
   fetchUserCalendarEvents,
+  updateNotificationSettings,
+  updateCalendarReminders,
 } from '../actions';
 import ManualEventCard from '@/app/admin/users/[id]/ManualEventCard';
 import CalendarToolsCard from '@/app/admin/users/[id]/CalendarToolsCard';
@@ -117,6 +119,14 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
           <QuickActionsCard user={user} />
           {/* Admin Notes */}
           <AdminNotesCard userId={user.id} existingNotes={user.adminNotes} />
+          {/* Notification Settings */}
+          <NotificationSettingsCard 
+            userId={user.id} 
+            notificationOffset={user.notificationOffset} 
+            firstLessonOffset={user.firstLessonOffset} 
+          />
+          {/* Calendar Reminder Updater */}
+          <CalendarReminderUpdaterCard userId={user.id} />
           {/* Manual Event Form */}
           <ManualEventCard userId={user.id} />
           {/* Calendar Tools (Fetch & Wipe) */}
@@ -231,3 +241,135 @@ const AdminNotesCard = ({ userId, existingNotes }: { userId: string; existingNot
     </form>
   </div>
 );
+
+const NotificationSettingsCard = ({ 
+  userId, 
+  notificationOffset, 
+  firstLessonOffset 
+}: { 
+  userId: string; 
+  notificationOffset: number; 
+  firstLessonOffset: number; 
+}) => (
+  <div className="bg-slate-800/60 border border-slate-700 rounded-xl p-6 flex flex-col">
+    <h3 className="text-base font-semibold text-white mb-2">Bildirim Ayarları</h3>
+    <p className="text-xs text-slate-500 mb-4">Takvim bildirim sürelerini özelleştirin.</p>
+    <form
+      action={async (formData: FormData) => {
+        'use server';
+        const standardOffset = parseInt(formData.get('notificationOffset') as string);
+        const firstOffset = parseInt(formData.get('firstLessonOffset') as string);
+        await updateNotificationSettings(userId, standardOffset, firstOffset);
+      }}
+      className="flex flex-col gap-4"
+    >
+      <div>
+        <label htmlFor="notificationOffset" className="block text-sm text-slate-300 mb-1">
+          Standart Dersler (dakika)
+        </label>
+        <input
+          type="number"
+          id="notificationOffset"
+          name="notificationOffset"
+          defaultValue={notificationOffset}
+          min="0"
+          max="1440"
+          className="w-full px-3 py-2 text-sm bg-slate-900/60 border border-slate-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+        />
+      </div>
+      <div>
+        <label htmlFor="firstLessonOffset" className="block text-sm text-slate-300 mb-1">
+          Günün İlk Dersi (dakika)
+        </label>
+        <input
+          type="number"
+          id="firstLessonOffset"
+          name="firstLessonOffset"
+          defaultValue={firstLessonOffset}
+          min="0"
+          max="1440"
+          className="w-full px-3 py-2 text-sm bg-slate-900/60 border border-slate-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+        />
+      </div>
+      <div className="flex justify-end">
+        <button
+          type="submit"
+          className="px-4 py-2 text-xs font-semibold rounded-md bg-blue-600 hover:bg-blue-500 text-white shadow"
+        >
+          Kaydet
+        </button>
+      </div>
+    </form>
+  </div>
+);
+
+const CalendarReminderUpdaterCard = ({ userId }: { userId: string }) => {
+  const now = new Date();
+  const currentMonth = now.getMonth() + 1;
+  const currentYear = now.getFullYear();
+
+  return (
+    <div className="bg-slate-800/60 border border-slate-700 rounded-xl p-6 flex flex-col">
+      <h3 className="text-base font-semibold text-white mb-2">Takvimdeki Bildirimleri Güncelle</h3>
+      <p className="text-xs text-slate-500 mb-4">Seçilen aydaki tüm ders bildirimlerini ayarlara göre günceller.</p>
+      <form
+        action={async (formData: FormData) => {
+          'use server';
+          const month = parseInt(formData.get('month') as string);
+          const year = parseInt(formData.get('year') as string);
+          await updateCalendarReminders(userId, month, year);
+        }}
+        className="flex flex-col gap-4"
+      >
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label htmlFor="month" className="block text-sm text-slate-300 mb-1">
+              Ay
+            </label>
+            <select
+              id="month"
+              name="month"
+              defaultValue={currentMonth}
+              className="w-full px-3 py-2 text-sm bg-slate-900/60 border border-slate-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+            >
+              <option value="1">Ocak</option>
+              <option value="2">Şubat</option>
+              <option value="3">Mart</option>
+              <option value="4">Nisan</option>
+              <option value="5">Mayıs</option>
+              <option value="6">Haziran</option>
+              <option value="7">Temmuz</option>
+              <option value="8">Ağustos</option>
+              <option value="9">Eylül</option>
+              <option value="10">Ekim</option>
+              <option value="11">Kasım</option>
+              <option value="12">Aralık</option>
+            </select>
+          </div>
+          <div>
+            <label htmlFor="year" className="block text-sm text-slate-300 mb-1">
+              Yıl
+            </label>
+            <input
+              type="number"
+              id="year"
+              name="year"
+              defaultValue={currentYear}
+              min="2020"
+              max="2030"
+              className="w-full px-3 py-2 text-sm bg-slate-900/60 border border-slate-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+            />
+          </div>
+        </div>
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            className="px-4 py-2 text-xs font-semibold rounded-md bg-indigo-600 hover:bg-indigo-500 text-white shadow"
+          >
+            Güncelle
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+};

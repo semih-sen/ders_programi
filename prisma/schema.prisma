@@ -51,6 +51,10 @@ model User {
   
   // Audit logs (Admin actions)
   auditLogs           AuditLog[]
+  
+  // Notification Settings
+  notificationOffset  Int @default(10)  // Standart dersler için dakika
+  firstLessonOffset   Int @default(60)  // Günün ilk dersi için dakika
 }
 
 model Account {

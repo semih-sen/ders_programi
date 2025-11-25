@@ -468,3 +468,225 @@ export async function sendManualEvent(
     return { error: error.message || 'Etkinlik gönderilirken hata oluştu.' } as const;
   }
 }
+
+/**
+ * Kullanıcının takvimdeki bildirimlerini (reminders) günceller
+ * Günün ilk dersine farklı, diğer derslere standart bildirim süresi uygular
+ * @param userId - Kullanıcının ID'si
+ * @param month - Ay (1-12)
+ * @param year - Yıl
+ */
+export async function updateCalendarReminders(userId: string, month: number, year: number) {
+  try {
+    // Admin kontrolü
+    await checkAdmin();
+
+    // Kullanıcıyı ve bildirim tercihlerini al
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        notificationOffset: true,
+        firstLessonOffset: true,
+      },
+    });
+
+    if (!user) {
+      return { error: 'Kullanıcı bulunamadı.' } as const;
+    }
+
+    // Google hesabını al
+    const account = await prisma.account.findFirst({
+      where: { userId },
+      select: { refresh_token: true },
+    });
+
+    if (!account?.refresh_token) {
+      return { error: 'Kullanıcının Google hesabı veya refresh token bulunamadı.' } as const;
+    }
+
+    // Refresh token'ı deşifre et
+    const decrypted = decrypt(account.refresh_token);
+    if (!decrypted) {
+      return { error: 'Refresh token deşifre edilemedi.' } as const;
+    }
+
+    // Access token al
+    const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: process.env.GOOGLE_CLIENT_ID || '',
+        client_secret: process.env.GOOGLE_CLIENT_SECRET || '',
+        refresh_token: decrypted,
+        grant_type: 'refresh_token',
+      }),
+    });
+
+    if (!tokenRes.ok) {
+      const errText = await tokenRes.text();
+      console.error('Token error:', errText);
+      return { error: 'Access token alınamadı.' } as const;
+    }
+
+    const tokenJson = await tokenRes.json();
+    const accessToken = tokenJson.access_token;
+
+    // Ay için başlangıç ve bitiş tarihleri
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59);
+
+    // Google Calendar'dan etkinlikleri çek
+    const calendarUrl = new URL('https://www.googleapis.com/calendar/v3/calendars/primary/events');
+    calendarUrl.searchParams.set('timeMin', startDate.toISOString());
+    calendarUrl.searchParams.set('timeMax', endDate.toISOString());
+    calendarUrl.searchParams.set('singleEvents', 'true');
+    calendarUrl.searchParams.set('orderBy', 'startTime');
+    calendarUrl.searchParams.set('maxResults', '2500');
+
+    const eventsRes = await fetch(calendarUrl.toString(), {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    if (!eventsRes.ok) {
+      const errText = await eventsRes.text();
+      console.error('Calendar events error:', errText);
+      return { error: 'Takvim etkinlikleri alınamadı.' } as const;
+    }
+
+    const eventsData = await eventsRes.json();
+    const allEvents = eventsData.items || [];
+
+    // Ders etkinliklerini filtrele (description'da belirli anahtar kelimeler var)
+    const lessonEvents = allEvents.filter((event: any) => {
+      const desc = (event.description || '').toLowerCase();
+      return desc.includes('sirkadiyen') || 
+             desc.includes('dilim adı') || 
+             desc.includes('uygulama detayları');
+    });
+
+    if (lessonEvents.length === 0) {
+      return { error: 'Güncellenecek ders etkinliği bulunamadı.' } as const;
+    }
+
+    // Günün ilk dersini belirlemek için tarih takibi
+    const processedDates = new Set<string>();
+    const eventsToUpdate: Array<{ eventId: string; reminderMinutes: number }> = [];
+
+    for (const event of lessonEvents) {
+      // Etkinliğin tarihini al (YYYY-MM-DD)
+      let eventDate: string;
+      if (event.start?.dateTime) {
+        eventDate = event.start.dateTime.split('T')[0];
+      } else if (event.start?.date) {
+        eventDate = event.start.date;
+      } else {
+        continue; // Tarih bilgisi yok, atla
+      }
+
+      // Bu günün ilk dersi mi kontrol et
+      let reminderMinutes: number;
+      if (!processedDates.has(eventDate)) {
+        // İlk ders
+        reminderMinutes = user.firstLessonOffset;
+        processedDates.add(eventDate);
+      } else {
+        // Sonraki dersler
+        reminderMinutes = user.notificationOffset;
+      }
+
+      eventsToUpdate.push({
+        eventId: event.id,
+        reminderMinutes,
+      });
+    }
+
+    // Batch API ile güncelleme yap
+    const boundary = `batch_${randomUUID()}`;
+    let batchBody = '';
+
+    for (const { eventId, reminderMinutes } of eventsToUpdate) {
+      const patchBody = JSON.stringify({
+        reminders: {
+          useDefault: false,
+          overrides: [{ method: 'popup', minutes: reminderMinutes }],
+        },
+      });
+
+      batchBody += `--${boundary}\r\n`;
+      batchBody += `Content-Type: application/http\r\n\r\n`;
+      batchBody += `PATCH /calendar/v3/calendars/primary/events/${eventId}\r\n`;
+      batchBody += `Content-Type: application/json\r\n\r\n`;
+      batchBody += `${patchBody}\r\n`;
+    }
+    batchBody += `--${boundary}--\r\n`;
+
+    // Batch request gönder
+    const batchRes = await fetch('https://www.googleapis.com/batch/calendar/v3', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': `multipart/mixed; boundary=${boundary}`,
+      },
+      body: batchBody,
+    });
+
+    if (!batchRes.ok) {
+      const errText = await batchRes.text();
+      console.error('Batch update error:', errText);
+      return { error: 'Toplu güncelleme başarısız oldu.' } as const;
+    }
+
+    // Audit log
+    await logAdminAction(
+      'CALENDAR_REMINDERS_UPDATED',
+      `${month}/${year} ayı için ${eventsToUpdate.length} etkinlik güncellendi.`,
+      userId
+    );
+
+    revalidatePath(`/admin/users/${userId}`);
+    return { 
+      success: true, 
+      message: `${eventsToUpdate.length} adet dersin bildirimi güncellendi.` 
+    } as const;
+
+  } catch (error: any) {
+    console.error('updateCalendarReminders error:', error);
+    return { error: error.message || 'Bildirim güncellemesi sırasında hata oluştu.' } as const;
+  }
+}
+
+/**
+ * Kullanıcının bildirim ayarlarını günceller
+ * @param userId - Kullanıcının ID'si
+ * @param notificationOffset - Standart dersler için dakika
+ * @param firstLessonOffset - İlk ders için dakika
+ */
+export async function updateNotificationSettings(
+  userId: string, 
+  notificationOffset: number, 
+  firstLessonOffset: number
+) {
+  try {
+    await checkAdmin();
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        notificationOffset,
+        firstLessonOffset,
+      },
+    });
+
+    await logAdminAction(
+      'NOTIFICATION_SETTINGS_UPDATED',
+      `Standart: ${notificationOffset}dk, İlk Ders: ${firstLessonOffset}dk`,
+      userId
+    );
+
+    revalidatePath(`/admin/users/${userId}`);
+    return { success: true } as const;
+  } catch (error: any) {
+    console.error('updateNotificationSettings error:', error);
+    return { error: error.message || 'Ayarlar güncellenemedi.' } as const;
+  }
+}
