@@ -201,3 +201,10 @@ model AuditLog {
   adminId     String
   admin       User     @relation(fields: [adminId], references: [id], onDelete: Cascade)
 }
+
+// System-wide settings - Key-Value store for configuration and timestamps
+model SystemSetting {
+  key       String   @id // Örn: "LAST_SYNC_START", "MAINTENANCE_MODE"
+  value     String   // ISO Date String veya başka değerler
+  updatedAt DateTime @updatedAt // Otomatik güncellenir
+}
