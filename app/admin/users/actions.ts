@@ -705,9 +705,9 @@ export async function forceYearlySync(userId: string) {
     }
 
     // Çevre değişkenini kontrol et
-    const webhookUrl = process.env.N8N_YEARLY_SYNC_WEBHOOK_URL;
+    const webhookUrl = process.env.N8N_WEBHOOK_URL;
     if (!webhookUrl) {
-      return { error: 'N8N_YEARLY_SYNC_WEBHOOK_URL çevre değişkeni tanımlanmamış.' } as const;
+      return { error: 'N8N_WEBHOOK_URL çevre değişkeni tanımlanmamış.' } as const;
     }
 
     const internalApiKey = process.env.N8N_INTERNAL_API_KEY;
