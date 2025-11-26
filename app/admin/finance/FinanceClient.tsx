@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { addTransaction, updateTransaction, deleteTransaction, searchUsers, transferFunds, toggleTransactionStatus } from './actions';
 import { useRouter } from 'next/navigation';
+import TransactionCard from '@/app/components/finance/TransactionCard';
 
 interface Transaction {
   id: string;
@@ -218,143 +219,28 @@ export default function FinanceClient({ transactions, accounts, periodLabel }: F
         </div>
       </div>
 
-      {/* İşlem Geçmişi Tablosu */}
-      <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl border border-slate-700 overflow-hidden">
-        <div className="p-4 border-b border-slate-700">
+      {/* İşlem Geçmişi - Kart Görünümü */}
+      <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl border border-slate-700 p-6">
+        <div className="mb-6">
           <h2 className="text-xl font-bold text-white">İşlem Geçmişi - {periodLabel}</h2>
           <p className="text-sm text-slate-400 mt-1">
             Dönem içinde {transactions.length} işlem
           </p>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[800px]">
-            <thead className="bg-slate-900/50">
-              <tr>
-                <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase">Tarih</th>
-                <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase">Tür</th>
-                <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase">Durum</th>
-                <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase">Hesap</th>
-                <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase">Kategori</th>
-                <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase">Açıklama</th>
-                <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase">Kullanıcı</th>
-                <th className="px-4 sm:px-6 py-3 text-right text-xs font-semibold text-slate-400 uppercase">Tutar</th>
-                <th className="px-4 sm:px-6 py-3 text-center text-xs font-semibold text-slate-400 uppercase">İşlem</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-700">
-              {transactions.length === 0 ? (
-                <tr>
-                  <td colSpan={9} className="px-6 py-12 text-center">
-                    <div className="flex flex-col items-center justify-center">
-                      <span className="text-5xl mb-3">📊</span>
-                      <p className="text-slate-400 text-lg font-medium">Bu dönemde işlem kaydı yok</p>
-                      <p className="text-slate-500 text-sm mt-1">Yeni işlem ekleyerek başlayın</p>
-                    </div>
-                  </td>
-                </tr>
-              ) : (
-                transactions.map((transaction) => {
-                  const isPending = transaction.status === 'PENDING';
-                  const rowClass = isPending ? 'bg-amber-500/5 hover:bg-amber-500/10' : 'hover:bg-slate-700/30';
-                  
-                  return (
-                  <tr key={transaction.id} className={`${rowClass} transition-colors`}>
-                    <td className="px-4 sm:px-6 py-3 text-sm text-slate-300">
-                      {new Date(transaction.date).toLocaleDateString('tr-TR', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
-                      })}
-                    </td>
-                    <td className="px-4 sm:px-6 py-3">
-                      {transaction.type === 'INCOME' && (
-                        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-500/20 text-green-400">📈 Gelir</span>
-                      )}
-                      {transaction.type === 'EXPENSE' && (
-                        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-red-500/20 text-red-400">📉 Gider</span>
-                      )}
-                      {transaction.type === 'DISTRIBUTION' && (
-                        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-400">🏷 Kâr Dağıtımı</span>
-                      )}
-                      {transaction.type === 'TRANSFER' && (
-                        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-400">↔ Virman</span>
-                      )}
-                    </td>
-                    <td className="px-4 sm:px-6 py-3">
-                      {transaction.type === 'TRANSFER' ? (
-                        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-slate-500/20 text-slate-400">-</span>
-                      ) : isPending ? (
-                        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-400">⏳ Bekliyor</span>
-                      ) : (
-                        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-400">✓ Tamamlandı</span>
-                      )}
-                    </td>
-                    <td className="px-4 sm:px-6 py-3 text-sm text-white font-medium">{transaction.account?.name}</td>
-                    <td className="px-4 sm:px-6 py-3 text-sm text-white font-medium">
-                      {transaction.category}
-                    </td>
-                    <td className="px-4 sm:px-6 py-3 text-sm text-slate-300">
-                      {transaction.type === 'TRANSFER' && transaction.relatedAccount ? (
-                        <span className="text-blue-400">
-                          → {transaction.relatedAccount.name}
-                          {transaction.description && ` (${transaction.description})`}
-                        </span>
-                      ) : (
-                        transaction.description || '-'
-                      )}
-                    </td>
-                    <td className="px-4 sm:px-6 py-3 text-sm text-slate-300">
-                      {transaction.user ? (
-                        <div>
-                          <p className="font-medium text-white">{transaction.user.name}</p>
-                          <p className="text-xs text-slate-400">{transaction.user.email}</p>
-                        </div>
-                      ) : (
-                        '-'
-                      )}
-                    </td>
-                    <td className={`px-4 sm:px-6 py-3 text-right text-base font-bold ${
-                      transaction.type === 'INCOME' ? 'text-green-400' : transaction.type === 'EXPENSE' || transaction.type === 'DISTRIBUTION' ? 'text-red-400' : 'text-blue-400'
-                    }`}>
-                      {transaction.type === 'INCOME' ? '+' : transaction.type === 'EXPENSE' || transaction.type === 'DISTRIBUTION' ? '-' : ''}
-                      ₺{transaction.amount.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
-                    </td>
-                    <td className="px-4 sm:px-6 py-3 text-center">
-                      <div className="flex gap-2 justify-center flex-wrap">
-                        {transaction.type !== 'TRANSFER' && (
-                          <button
-                            onClick={() => handleToggleStatus(transaction.id)}
-                            className={`px-3 py-1 rounded hover:opacity-80 text-xs font-semibold transition-colors ${
-                              isPending ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'
-                            }`}
-                            title="Durumu Değiştir"
-                          >
-                            {isPending ? '✓ Tamamla' : '⏳ Beklet'}
-                          </button>
-                        )}
-                        <button
-                          onClick={() => handleEdit(transaction)}
-                          className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded hover:bg-blue-500/30 text-xs font-semibold transition-colors"
-                          title="Düzenle"
-                        >
-                          ✏️
-                        </button>
-                        <button
-                          onClick={() => handleDelete(transaction.id)}
-                          className="px-3 py-1 bg-red-500/20 text-red-400 rounded hover:bg-red-500/30 text-xs font-semibold transition-colors"
-                          title="Sil"
-                        >
-                          🗑️
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+
+        {transactions.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16">
+            <span className="text-5xl mb-3">📊</span>
+            <p className="text-slate-400 text-lg font-medium">Bu dönemde işlem kaydı yok</p>
+            <p className="text-slate-500 text-sm mt-1">Yeni işlem ekleyerek başlayın</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {transactions.map((transaction) => (
+              <TransactionCard key={transaction.id} transaction={transaction} />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Modal - Yeni İşlem Ekle */}

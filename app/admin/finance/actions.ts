@@ -675,3 +675,60 @@ export async function getMonthlyBalanceSheet(year: number) {
     throw error;
   }
 }
+
+/**
+ * Get a single transaction by ID with all relations
+ */
+export async function getTransactionById(id: string) {
+  await checkAdmin();
+
+  try {
+    const transaction = await prisma.transaction.findUnique({
+      where: { id },
+      include: {
+        account: {
+          select: {
+            id: true,
+            name: true,
+            type: true,
+            balance: true,
+          },
+        },
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            paymentStatus: true,
+          },
+        },
+      },
+    });
+
+    if (!transaction) {
+      throw new Error('Transaction not found');
+    }
+
+    // Eğer transfer ise, ilgili hesabı da getir
+    let relatedAccount = null;
+    if (transaction.type === 'TRANSFER' && transaction.relatedAccountId) {
+      relatedAccount = await prisma.financialAccount.findUnique({
+        where: { id: transaction.relatedAccountId },
+        select: {
+          id: true,
+          name: true,
+          type: true,
+          balance: true,
+        },
+      });
+    }
+
+    return {
+      ...transaction,
+      relatedAccount,
+    };
+  } catch (error) {
+    console.error('Transaction fetch error:', error);
+    throw error;
+  }
+}
