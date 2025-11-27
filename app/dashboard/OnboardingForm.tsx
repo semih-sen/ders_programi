@@ -21,6 +21,7 @@ export default function OnboardingForm({ courses }: OnboardingFormProps) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [isCoursesExpanded, setIsCoursesExpanded] = useState<boolean>(false);
 
   // Form state
   const [uygulamaGrubu, setUygulamaGrubu] = useState<string>('');
@@ -230,87 +231,106 @@ export default function OnboardingForm({ courses }: OnboardingFormProps) {
               </div>
             </div>
 
-            {/* Course Preferences */}
+            {/* Course Preferences - Collapsible */}
             <div className="pt-8 border-t border-slate-700">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
+              <button
+                type="button"
+                onClick={() => setIsCoursesExpanded(!isCoursesExpanded)}
+                className="w-full flex items-center justify-between p-4 bg-slate-700/30 hover:bg-slate-700/50 rounded-lg border border-slate-600/50 hover:border-slate-500 transition-all group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center group-hover:bg-purple-500/30 transition-all">
                     <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                     </svg>
                   </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-white">Ders Tercihleri</h2>
-                    <p className="text-slate-400 text-sm mt-1">
+                  <div className="text-left">
+                    <h2 className="text-xl font-bold text-white">Ders Tercihleri</h2>
+                    <p className="text-slate-400 text-sm mt-0.5">
                       {selectedCoursesCount} / {courses.length} ders seçildi
                     </p>
                   </div>
                 </div>
                 
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={selectAllCourses}
-                    className="px-3 py-1.5 text-xs font-semibold bg-green-500/20 text-green-400 hover:bg-green-500/30 rounded-lg transition-all"
-                  >
-                    Tümünü Seç
-                  </button>
-                  <button
-                    type="button"
-                    onClick={deselectAllCourses}
-                    className="px-3 py-1.5 text-xs font-semibold bg-red-500/20 text-red-400 hover:bg-red-500/30 rounded-lg transition-all"
-                  >
-                    Tümünü Kaldır
-                  </button>
-                </div>
-              </div>
+                <svg
+                  className={`w-6 h-6 text-slate-400 transition-transform duration-200 ${
+                    isCoursesExpanded ? 'rotate-180' : ''
+                  }`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
 
-              <div className="grid sm:grid-cols-2 gap-3">
-                {courses.map((course) => (
-                  <div
-                    key={course.id}
-                    className="group bg-slate-700/30 hover:bg-slate-700/50 rounded-lg p-4 border border-slate-600/50 hover:border-slate-500 transition-all"
-                  >
-                    <div className="flex flex-col gap-3">
-                      <span className="text-white font-semibold text-sm">{course.name}</span>
-                      
-                      <div className="flex gap-3">
-                        <label className="flex items-center gap-2 cursor-pointer flex-1">
-                          <input
-                            type="checkbox"
-                            checked={coursePreferences[course.id]?.addToCalendar ?? true}
-                            onChange={(e) =>
-                              handleCoursePreferenceChange(
-                                course.id,
-                                'addToCalendar',
-                                e.target.checked
-                              )
-                            }
-                            className="w-4 h-4 text-blue-600 bg-slate-700 border-slate-600 rounded focus:ring-blue-500 focus:ring-2"
-                          />
-                          <span className="text-xs text-slate-300">📅 Takvim</span>
-                        </label>
-
-                        <label className="flex items-center gap-2 cursor-pointer flex-1">
-                          <input
-                            type="checkbox"
-                            checked={coursePreferences[course.id]?.notifications ?? true}
-                            onChange={(e) =>
-                              handleCoursePreferenceChange(
-                                course.id,
-                                'notifications',
-                                e.target.checked
-                              )
-                            }
-                            className="w-4 h-4 text-green-600 bg-slate-700 border-slate-600 rounded focus:ring-green-500 focus:ring-2"
-                          />
-                          <span className="text-xs text-slate-300">🔔 Bildirim</span>
-                        </label>
-                      </div>
-                    </div>
+              {isCoursesExpanded && (
+                <div className="mt-4 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={selectAllCourses}
+                      className="px-3 py-1.5 text-xs font-semibold bg-green-500/20 text-green-400 hover:bg-green-500/30 rounded-lg transition-all"
+                    >
+                      Tümünü Seç
+                    </button>
+                    <button
+                      type="button"
+                      onClick={deselectAllCourses}
+                      className="px-3 py-1.5 text-xs font-semibold bg-red-500/20 text-red-400 hover:bg-red-500/30 rounded-lg transition-all"
+                    >
+                      Tümünü Kaldır
+                    </button>
                   </div>
-                ))}
-              </div>
+
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    {courses.map((course) => (
+                      <div
+                        key={course.id}
+                        className="group bg-slate-700/30 hover:bg-slate-700/50 rounded-lg p-4 border border-slate-600/50 hover:border-slate-500 transition-all"
+                      >
+                        <div className="flex flex-col gap-3">
+                          <span className="text-white font-semibold text-sm">{course.name}</span>
+                          
+                          <div className="flex gap-3">
+                            <label className="flex items-center gap-2 cursor-pointer flex-1">
+                              <input
+                                type="checkbox"
+                                checked={coursePreferences[course.id]?.addToCalendar ?? true}
+                                onChange={(e) =>
+                                  handleCoursePreferenceChange(
+                                    course.id,
+                                    'addToCalendar',
+                                    e.target.checked
+                                  )
+                                }
+                                className="w-4 h-4 text-blue-600 bg-slate-700 border-slate-600 rounded focus:ring-blue-500 focus:ring-2"
+                              />
+                              <span className="text-xs text-slate-300">📅 Takvim</span>
+                            </label>
+
+                            <label className="flex items-center gap-2 cursor-pointer flex-1">
+                              <input
+                                type="checkbox"
+                                checked={coursePreferences[course.id]?.notifications ?? true}
+                                onChange={(e) =>
+                                  handleCoursePreferenceChange(
+                                    course.id,
+                                    'notifications',
+                                    e.target.checked
+                                  )
+                                }
+                                className="w-4 h-4 text-green-600 bg-slate-700 border-slate-600 rounded focus:ring-green-500 focus:ring-2"
+                              />
+                              <span className="text-xs text-slate-300">🔔 Bildirim</span>
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Error/Success Messages */}
