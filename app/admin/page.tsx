@@ -40,6 +40,7 @@ export default async function AdminDashboard() {
           <QuickLink href="/admin/licenses" title="Lisans Yönetimi" description="Lisans anahtarlarını yönet" icon="key" color="purple" />
           <QuickLink href="/admin/finance" title="Finans Yönetimi" description="Gelir, gider ve kasa takibi" icon="finance" color="green" />
           <QuickLink href="/admin/finance/accounts" title="Kasa Yönetimi" description="Kasa ve hesap ekle/düzenle" icon="wallet" color="orange" />
+          <QuickLink href="/admin/dining" title="Yemekhane Menüleri" description="Üniversite menülerini yönet" icon="dining" color="yellow" />
           <QuickLink href="/admin/data-files" title="Veri Dosyaları" description="JSON dosyalarını yönet" icon="file" color="cyan" />
           <QuickLink href="/admin/audit" title="Denetim Günlüğü" description="Sistem aktivitelerini görüntüle" icon="audit" color="red" />
         </div>
@@ -72,6 +73,7 @@ function QuickLink({ href, title, description, icon, color }: { href: string; ti
     purple: { bg: 'bg-purple-500/20', text: 'text-purple-400', hover: 'group-hover:bg-purple-500/30' },
     green: { bg: 'bg-green-500/20', text: 'text-green-400', hover: 'group-hover:bg-green-500/30' },
     orange: { bg: 'bg-orange-500/20', text: 'text-orange-400', hover: 'group-hover:bg-orange-500/30' },
+    yellow: { bg: 'bg-yellow-500/20', text: 'text-yellow-400', hover: 'group-hover:bg-yellow-500/30' },
     cyan: { bg: 'bg-cyan-500/20', text: 'text-cyan-400', hover: 'group-hover:bg-cyan-500/30' },
     red: { bg: 'bg-red-500/20', text: 'text-red-400', hover: 'group-hover:bg-red-500/30' },
   };
@@ -82,6 +84,7 @@ function QuickLink({ href, title, description, icon, color }: { href: string; ti
     key: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />,
     finance: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />,
     wallet: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />,
+    dining: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />,
     file: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />,
     audit: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />,
   };
