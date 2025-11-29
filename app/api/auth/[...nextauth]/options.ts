@@ -3,6 +3,7 @@ import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import { encrypt } from "@/lib/crypto";
+import { logActivity } from "@/lib/logger";
 import type { Adapter } from "next-auth/adapters";
 import { tr } from "zod/locales";
 
@@ -173,6 +174,13 @@ export const authOptions: NextAuthOptions = {
         provider: account?.provider,
         isNewUser,
       });
+      
+      // Log the login activity
+      await logActivity(
+        user.id || null,
+        'LOGIN',
+        `User logged in via ${account?.provider || 'unknown'} ${isNewUser ? '(New User)' : ''}`
+      );
     },
 
     /**

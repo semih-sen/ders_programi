@@ -52,6 +52,9 @@ model User {
   // Audit logs (Admin actions)
   auditLogs           AuditLog[]
   
+  // Activity logs (User actions tracking)
+  activities          ActivityLog[]
+  
   // Notification Settings
   notificationOffset  Int @default(15)  // Standart dersler için dakika
   firstLessonOffset   Int @default(45)  // Günün ilk dersi için dakika
@@ -207,4 +210,22 @@ model SystemSetting {
   key       String   @id // Örn: "LAST_SYNC_START", "MAINTENANCE_MODE"
   value     String   // ISO Date String veya başka değerler
   updatedAt DateTime @updatedAt // Otomatik güncellenir
+}
+
+// Activity Log - High-volume user activity tracking
+model ActivityLog {
+  id          String   @id @default(cuid())
+  userId      String?  // Optional - captures guest traffic or link to User if logged in
+  action      String   // e.g., "LOGIN", "PAGE_VIEW", "BUTTON_CLICK"
+  details     String?  // e.g., "/dashboard", "Clicked 'Sync Calendar'"
+  ipAddress   String?  // IPv4/IPv6
+  userAgent   String?  @db.Text // Browser/Device info
+  createdAt   DateTime @default(now())
+  
+  // Relation to User (optional)
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
 }

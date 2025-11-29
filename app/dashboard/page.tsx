@@ -2,6 +2,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
+import { logActivity } from '@/lib/logger';
 import ActivationForm from './ActivationForm';
 import OnboardingForm from './OnboardingForm';
 import YearlySyncForm from './YearlySyncForm';
@@ -24,6 +25,9 @@ export default async function DashboardPage() {
   }
 
   const user = session.user;
+  
+  // Log page view
+  await logActivity(user.id, 'PAGE_VIEW', '/dashboard');
 
   // --- YENİ BAN KONTROLÜ (GÖREV 3) - HER ŞEYDEN ÖNCE ---
   if (user.isBanned) {
