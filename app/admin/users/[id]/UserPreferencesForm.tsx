@@ -17,7 +17,7 @@ interface Props {
 
 const classYearOptions = [1, 2, 3, 4, 5, 6];
 const uygulamaGrubuOptions = ['A', 'B', 'C', 'D'];
-const anatomiGrubuOptions = ['1', '2', '3', '4'];
+const anatomiGrubuOptions = ['Anatomi-1', 'Anatomi-2', 'Anatomi-3'];
 
 export default function UserPreferencesForm({ user }: Props) {
   const [formState, setFormState] = useState({
