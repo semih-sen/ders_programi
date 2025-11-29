@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import UserPreferencesForm from './UserPreferencesForm';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { redirect } from 'next/navigation';
@@ -37,14 +38,30 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
 
   const user = await prisma.user.findUnique({
     where: { id: params.id },
-    include: {
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      isActivated: true,
+      isBanned: true,
+      banReason: true,
+      createdAt: true,
+      classYear: true,
+      uygulamaGrubu: true,
+      anatomiGrubu: true,
+      yemekhaneEklensin: true,
+      hasYearlySynced: true,
+      activatedKey: { select: { id: true } },
       accounts: true,
-      activatedKey: true,
       courseSubscriptions: {
         include: {
           course: true,
         },
       },
+      adminNotes: true,
+      notificationOffset: true,
+      firstLessonOffset: true,
     },
   });
 
@@ -95,6 +112,7 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
               <li className="flex justify-between"><span className="text-slate-400">Sınıf (Dönem)</span><span className="text-white">{user.classYear ?? '—'}</span></li>
               <li className="flex justify-between"><span className="text-slate-400">Uygulama Grubu</span><span className="text-white">{user.uygulamaGrubu || '—'}</span></li>
               <li className="flex justify-between"><span className="text-slate-400">Anatomi Grubu</span><span className="text-white">{user.anatomiGrubu || '—'}</span></li>
+              <li className="flex justify-between"><span className="text-slate-400">Yemekhane</span><span className={user.yemekhaneEklensin ? 'text-green-400' : 'text-slate-500'}>{user.yemekhaneEklensin ? 'Evet' : 'Hayır'}</span></li>
               <li className="flex justify-between"><span className="text-slate-400">Yıllık Eşitleme</span><span className={user.hasYearlySynced ? 'text-green-400' : 'text-slate-500'}>{user.hasYearlySynced ? 'Yapıldı' : 'Yapılmadı'}</span></li>
               <li className="flex justify-between"><span className="text-slate-400">Lisans</span><span className="text-white">{user.activatedKey?.id || '—'}</span></li>
             </ul>
@@ -112,6 +130,8 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
               </form>
             )}
           </div>
+          {/* Kullanıcı Tercihleri Düzenleme Formu */}
+          <UserPreferencesForm user={user} />
         </div>
 
         {/* RIGHT COLUMN: ACTION GRID */}

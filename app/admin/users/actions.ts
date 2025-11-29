@@ -756,3 +756,45 @@ export async function forceYearlySync(userId: string) {
     return { error: error.message || 'Yıllık eşitleme tetiklenirken hata oluştu.' } as const;
   }
 }
+
+/**
+ * Kullanıcı tercihlerini günceller
+ * @param userId - Kullanıcı ID'si
+ * @param formData - Güncellenecek alanlar
+ */
+export async function updateUserPreferences(userId: string, formData: FormData) {
+  await checkAdmin();
+
+  if (!userId) {
+    return { error: 'Kullanıcı ID gerekli.' };
+  }
+
+  try {
+    // Form verilerini al
+    const classYearRaw = formData.get('classYear');
+    const uygulamaGrubu = formData.get('uygulamaGrubu') as string | null;
+    const anatomiGrubu = formData.get('anatomiGrubu') as string | null;
+    const yemekhaneEklensinRaw = formData.get('yemekhaneEklensin');
+
+    // Dönem (sınıf) int'e çevir
+    const classYear = classYearRaw ? parseInt(classYearRaw as string, 10) : null;
+    // Checkbox: "on" ise true, yoksa false
+    const yemekhaneEklensin = yemekhaneEklensinRaw === 'on';
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        classYear,
+        uygulamaGrubu: uygulamaGrubu || null,
+        anatomiGrubu: anatomiGrubu || null,
+        yemekhaneEklensin,
+      },
+    });
+
+    revalidatePath(`/admin/users/${userId}`);
+    return { success: 'Kullanıcı tercihleri güncellendi.' };
+  } catch (error: any) {
+    console.error('Kullanıcı tercihleri güncelleme hatası:', error);
+    return { error: error.message || 'Tercihler güncellenirken hata oluştu.' };
+  }
+}
