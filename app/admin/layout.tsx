@@ -50,6 +50,9 @@ export default async function AdminLayout({ children }: { children: ReactNode })
                   <MobileNavLink href="/admin/data-files" icon={<EditIcon />}>
                     JSON Veri Editörü
                   </MobileNavLink>
+                  <MobileNavLink href="/admin/analytics" icon={<ClipboardIcon />}>
+                Analizler
+              </MobileNavLink>
                   <MobileNavLink href="/admin/audit" icon={<ClipboardIcon />}>
                     Denetim Kaydı
                   </MobileNavLink>
@@ -99,6 +102,9 @@ export default async function AdminLayout({ children }: { children: ReactNode })
               </NavLink>
               <NavLink href="/admin/data-files" icon={<EditIcon />}>
                 JSON Veri Editörü
+              </NavLink>
+              <NavLink href="/admin/analytics" icon={<ClipboardIcon />}>
+                Analizler
               </NavLink>
               <NavLink href="/admin/audit" icon={<ClipboardIcon />}>
                 Denetim Kaydı
