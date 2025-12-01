@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import UserPreferencesForm from './UserPreferencesForm';
+import OnboardingSwitch from './OnboardingSwitch';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { redirect } from 'next/navigation';
@@ -20,6 +21,7 @@ import {
 } from '../actions';
 import ManualEventCard from '@/app/admin/users/[id]/ManualEventCard';
 import CalendarToolsCard from '@/app/admin/users/[id]/CalendarToolsCard';
+import Image from 'next/image';
 
 interface UserDetailPageProps {
   params: { id: string };
@@ -42,16 +44,22 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
       id: true,
       name: true,
       email: true,
+      emailVerified: true,
+      image: true,
       role: true,
       isActivated: true,
       isBanned: true,
       banReason: true,
       createdAt: true,
+      updatedAt: true,
       classYear: true,
       uygulamaGrubu: true,
       anatomiGrubu: true,
       yemekhaneEklensin: true,
       hasYearlySynced: true,
+      hasCompletedOnboarding: true,
+      language: true,
+      paymentStatus: true,
       activatedKey: { select: { id: true } },
       accounts: true,
       courseSubscriptions: {
@@ -79,15 +87,57 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">Kontrol Merkezi</h1>
-        <p className="text-slate-400 flex flex-wrap gap-2 items-center">
-          <span>{user.name || 'İsimsiz'}</span>
-          <span className="text-slate-600">•</span>
-          <span className="truncate max-w-[300px]" title={user.email}>{user.email}</span>
-          <span className="text-slate-600">•</span>
-          <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${user.role === 'ADMIN' ? 'bg-red-500/20 text-red-400' : 'bg-slate-600/50 text-slate-300'}`}>{user.role}</span>
-        </p>
+      {/* Modern Profile Header Card */}
+      <div className="bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-sm rounded-2xl border border-slate-700/50 p-6 mb-8 shadow-xl">
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+          {/* Avatar */}
+          <div className="flex-shrink-0">
+            {user.image ? (
+              <div className="w-24 h-24 rounded-full overflow-hidden ring-4 ring-blue-500/20 shadow-lg">
+                <Image
+                  src={user.image}
+                  alt={user.name || 'User avatar'}
+                  width={96}
+                  height={96}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            ) : (
+              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white text-3xl font-bold shadow-lg ring-4 ring-blue-500/20">
+                {(user.name || user.email || 'U')[0].toUpperCase()}
+              </div>
+            )}
+          </div>
+
+          {/* User Info */}
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-2">
+              <h1 className="text-2xl sm:text-3xl font-bold text-white">
+                {user.name || 'İsimsiz Kullanıcı'}
+              </h1>
+              <span className={`px-3 py-1 rounded-full text-xs font-bold ${user.role === 'ADMIN' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-slate-600/50 text-slate-300 border border-slate-600'}`}>
+                {user.role}
+              </span>
+            </div>
+            <p className="text-slate-300 mb-3 break-all">{user.email}</p>
+            <div className="flex flex-wrap gap-4 text-sm">
+              <div className="flex items-center gap-2">
+                <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span className="text-slate-400">Oluşturulma:</span>
+                <span className="text-white font-medium">{new Date(user.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                <span className="text-slate-400">Son Güncelleme:</span>
+                <span className="text-white font-medium">{new Date(user.updatedAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
@@ -136,6 +186,12 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
 
         {/* RIGHT COLUMN: ACTION GRID */}
         <div className="lg:col-span-2 grid gap-6 md:grid-cols-2">
+          {/* Onboarding Switch */}
+          <OnboardingSwitch userId={user.id} initialStatus={user.hasCompletedOnboarding} />
+          
+          {/* Sistem Bilgileri */}
+          <SystemInfoCard user={user} />
+          
           {/* Quick Actions */}
           <QuickActionsCard user={user} />
           {/* Admin Notes */}
@@ -203,6 +259,75 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
 }
 
 // SERVER COMPONENTS ONLY (client components extracted to separate files)
+const SystemInfoCard = ({ user }: { user: any }) => (
+  <div className="bg-slate-800/60 border border-slate-700 rounded-xl p-6">
+    <div className="flex items-center gap-2 mb-4">
+      <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </svg>
+      <h3 className="text-base font-semibold text-white">Sistem Bilgileri</h3>
+    </div>
+    <p className="text-xs text-slate-500 mb-4">Teknik kullanıcı detayları ve sistem verileri</p>
+    
+    <div className="space-y-2.5 text-sm">
+      <div className="flex justify-between items-center py-1 border-b border-slate-700/50">
+        <span className="text-slate-400">Kullanıcı ID</span>
+        <span className="text-slate-300 font-mono text-xs">{user.id}</span>
+      </div>
+      
+      <div className="flex justify-between items-center py-1 border-b border-slate-700/50">
+        <span className="text-slate-400">Email Doğrulama</span>
+        <span className={user.emailVerified ? 'text-green-400' : 'text-slate-500'}>
+          {user.emailVerified 
+            ? new Date(user.emailVerified).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' })
+            : 'Doğrulanmadı'}
+        </span>
+      </div>
+      
+      <div className="flex justify-between items-center py-1 border-b border-slate-700/50">
+        <span className="text-slate-400">Dil</span>
+        <span className="text-white font-medium">{user.language || 'TR'}</span>
+      </div>
+      
+      <div className="flex justify-between items-center py-1 border-b border-slate-700/50">
+        <span className="text-slate-400">Dönem</span>
+        <span className="text-white font-medium">{user.classYear ? `Dönem ${user.classYear}` : '—'}</span>
+      </div>
+      
+      <div className="flex justify-between items-center py-1 border-b border-slate-700/50">
+        <span className="text-slate-400">Ödeme Durumu</span>
+        <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
+          user.paymentStatus === 'PAID' ? 'bg-green-500/20 text-green-400' :
+          user.paymentStatus === 'FREE' ? 'bg-blue-500/20 text-blue-400' :
+          'bg-orange-500/20 text-orange-400'
+        }`}>
+          {user.paymentStatus === 'PAID' ? 'Ödendi' : 
+           user.paymentStatus === 'FREE' ? 'Ücretsiz' : 'Ödenmedi'}
+        </span>
+      </div>
+      
+      <div className="flex justify-between items-center py-1 border-b border-slate-700/50">
+        <span className="text-slate-400">Onboarding</span>
+        <span className={user.hasCompletedOnboarding ? 'text-green-400' : 'text-slate-500'}>
+          {user.hasCompletedOnboarding ? '✓ Tamamlandı' : '✗ Tamamlanmadı'}
+        </span>
+      </div>
+      
+      <div className="flex justify-between items-center py-1 border-b border-slate-700/50">
+        <span className="text-slate-400">Google Hesabı</span>
+        <span className={user.accounts?.length > 0 ? 'text-green-400' : 'text-slate-500'}>
+          {user.accounts?.length > 0 ? '✓ Bağlı' : '✗ Bağlı değil'}
+        </span>
+      </div>
+      
+      <div className="flex justify-between items-center py-1">
+        <span className="text-slate-400">Lisans Anahtarı</span>
+        <span className="text-slate-300 font-mono text-xs">{user.activatedKey?.id || '—'}</span>
+      </div>
+    </div>
+  </div>
+);
+
 const QuickActionsCard = ({ user }: { user: any }) => (
   <div className="bg-slate-800/60 border border-slate-700 rounded-xl p-6 flex flex-col">
     <h3 className="text-base font-semibold text-white mb-2">Hızlı İşlemler</h3>

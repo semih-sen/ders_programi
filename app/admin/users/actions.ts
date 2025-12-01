@@ -798,3 +798,40 @@ export async function updateUserPreferences(userId: string, formData: FormData) 
     return { error: error.message || 'Tercihler güncellenirken hata oluştu.' };
   }
 }
+
+/**
+ * Kullanıcının onboarding tamamlanma durumunu değiştirir
+ * @param userId - Kullanıcının ID'si
+ * @param currentStatus - Mevcut hasCompletedOnboarding durumu
+ */
+export async function toggleOnboardingStatus(userId: string, currentStatus: boolean) {
+  await checkAdmin();
+
+  if (!userId) {
+    return { error: 'Kullanıcı ID gerekli.' };
+  }
+
+  try {
+    const newStatus = !currentStatus;
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: { hasCompletedOnboarding: newStatus },
+    });
+
+    // Audit log kaydı
+    await logAdminAction(
+      'ONBOARDING_STATUS_CHANGED',
+      `Durum değiştirildi: ${currentStatus ? 'Tamamlandı' : 'Tamamlanmadı'} → ${newStatus ? 'Tamamlandı' : 'Tamamlanmadı'}`,
+      userId
+    );
+
+    revalidatePath(`/admin/users/${userId}`);
+    revalidatePath('/admin/users');
+
+    return { success: true, newStatus };
+  } catch (error: any) {
+    console.error('Onboarding durumu değiştirme hatası:', error);
+    return { error: error.message || 'Durum değiştirilirken hata oluştu.' };
+  }
+}
