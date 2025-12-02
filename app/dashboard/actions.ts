@@ -6,6 +6,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { revalidatePath } from 'next/cache';
 import { Buffer } from 'node:buffer';
 import { z } from 'zod';
+import { sendToQueue } from '@/lib/rabbitmq';
 
 /**
  * Activate a user account with a license key
@@ -110,40 +111,37 @@ export async function triggerYearlySync(
     return { success: false, message: 'Yıllık senkronizasyon daha önce yapılmış. Tekrar yapılamaz.' };
   }
 
-  const { N8N_WEBHOOK_URL, N8N_WEBHOOK_USER, N8N_WEBHOOK_PASS } = process.env;
-  if (!N8N_WEBHOOK_URL || !N8N_WEBHOOK_USER || !N8N_WEBHOOK_PASS) {
-    return { success: false, message: 'Sunucu yapılandırması eksik (n8n). Lütfen ortam değişkenlerini ayarlayın.' };
-  }
-
   try {
-    const basicAuth = Buffer.from(`${N8N_WEBHOOK_USER}:${N8N_WEBHOOK_PASS}`).toString('base64');
-
-    const res = await fetch(N8N_WEBHOOK_URL, {
-      method: 'POST',
-      headers: {
-        Authorization: `Basic ${basicAuth}`,
-        'Content-Type': 'application/json',
+    // Kullanıcının durumunu QUEUED (Sırada) olarak işaretle
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        hasYearlySynced: true, // Kuyrukta işaretlendi
+        updatedAt: new Date(), // Kuyruk zamanı (syncQueuedAt için updatedAt kullanıyoruz)
       },
-      body: JSON.stringify({ userId, source: 'YearlyCalendarSync' }),
-      cache: 'no-store',
     });
 
-    if (res.ok) {
-      // Senkronizasyon başarılı, kullanıcıyı işaretle
-      await prisma.user.update({
-        where: { id: userId },
-        data: { hasYearlySynced: true },
-      });
+    // RabbitMQ kuyruğuna mesaj gönder
+    await sendToQueue('sirkadiyen_sync_jobs', {
+      userId: userId,
+      source: 'User_Dashboard',
+      timestamp: Date.now(),
+    });
 
-      revalidatePath('/dashboard');
-      
-      return { success: true, message: 'Yıllık senkronizasyon başarıyla başlatıldı!' };
-    }
+    console.log('✅ Senkronizasyon işi kuyruğa eklendi:', userId);
 
-    return { success: false, message: 'Senkronizasyon tetiklenirken hata oluştu.' };
+    revalidatePath('/dashboard');
+
+    return {
+      success: true,
+      message: 'İşleminiz sıraya alındı, yoğunluğa göre kısa sürede tamamlanacak.',
+    };
   } catch (err) {
-    console.error('❌ Yearly sync error:', err);
-    return { success: false, message: 'Beklenmeyen bir hata oluştu.' };
+    console.error('❌ Yearly sync queue error:', err);
+    return {
+      success: false,
+      message: 'Senkronizasyon sıraya alınırken bir hata oluştu. Lütfen tekrar deneyin.',
+    };
   }
 }
 
