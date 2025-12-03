@@ -177,3 +177,68 @@ export async function createEntry(
     return { success: false, error: 'Kayıt ekleme işlemi sırasında bir hata oluştu.' };
   }
 }
+
+/**
+ * Bir JSON dosyasına toplu kayıt ekler (bulk import)
+ * @param filePath - Dosya yolu (örn: "donem-2/anatomy")
+ * @param newEntries - Yeni eklenecek veri dizisi
+ */
+export async function bulkCreateEntries(
+  filePath: string,
+  newEntries: Record<string, any>[]
+) {
+  try {
+    // Güvenlik: Admin kontrolü
+    const session = await getServerSession(authOptions);
+    if (!session?.user || session.user.role !== 'ADMIN') {
+      return { success: false, error: 'Bu işlem için admin yetkisi gereklidir.' };
+    }
+
+    // Dosya yolunu oluştur
+    const fullPath = path.join('/home/ghrunner/sirkadiyen-data', 'private-data', `${filePath}.json`);
+
+    // Dosya var mı kontrol et
+    if (!fs.existsSync(fullPath)) {
+      return { success: false, error: 'Dosya bulunamadı.' };
+    }
+
+    // Dosyayı oku ve parse et
+    const fileContent = fs.readFileSync(fullPath, 'utf-8');
+    const data = JSON.parse(fileContent);
+
+    // Dizi mi kontrol et
+    if (!Array.isArray(data)) {
+      return { success: false, error: 'Dosya formatı geçersiz.' };
+    }
+
+    // Yeni girişlerin dizi olduğunu kontrol et
+    if (!Array.isArray(newEntries) || newEntries.length === 0) {
+      return { success: false, error: 'Geçersiz veri formatı.' };
+    }
+
+    // Her kayda otomatik ID ekle
+    const entriesWithIds = newEntries.map((entry) => ({
+      ...entry,
+      id: randomUUID(),
+    }));
+
+    // Yeni kayıtları dizinin sonuna ekle
+    data.push(...entriesWithIds);
+
+    // Dosyayı güncelle
+    fs.writeFileSync(fullPath, JSON.stringify(data, null, 2), 'utf-8');
+
+    // Sayfayı yenile
+    revalidatePath(`/admin/data-files/edit/${filePath}`);
+    revalidatePath('/admin/data-files');
+
+    return { 
+      success: true, 
+      message: `${entriesWithIds.length} adet kayıt başarıyla eklendi.`,
+      count: entriesWithIds.length 
+    };
+  } catch (error) {
+    console.error('bulkCreateEntries hatası:', error);
+    return { success: false, error: 'Toplu kayıt ekleme işlemi sırasında bir hata oluştu.' };
+  }
+}

@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { deleteEntry, updateEntry, createEntry } from '../../actions';
+import { deleteEntry, updateEntry, createEntry, bulkCreateEntries } from '../../actions';
+import BulkJsonImport from './BulkJsonImport';
 
 interface JsonEditorTableProps {
   data: any[];
@@ -189,6 +190,32 @@ export default function JsonEditorTable({ data, filePath }: JsonEditorTableProps
     }
   };
 
+  // Toplu JSON import işlemi
+  const handleBulkImport = async (parsedData: any[]) => {
+    setIsSubmitting(true);
+    try {
+      // Not: ID'ler artık client-side'da (BulkJsonImport) oluşturuluyor
+      // Server action'a direkt gönderiyoruz (ID çıkarmaya gerek yok)
+      const cleanedData = parsedData.map((item) => {
+        const { id, ...rest } = item;
+        return rest; // Server'da yeniden UUID oluşturulacak
+      });
+
+      const result = await bulkCreateEntries(filePath, cleanedData);
+
+      if (result.success) {
+        alert(result.message);
+        window.location.reload();
+      } else {
+        alert(result.error || 'Toplu kayıt ekleme işlemi başarısız oldu.');
+      }
+    } catch (error) {
+      alert('Bir hata oluştu.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   if (data.length === 0) {
     return (
       <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-8 text-center">
@@ -205,8 +232,12 @@ export default function JsonEditorTable({ data, filePath }: JsonEditorTableProps
 
   return (
     <>
-      {/* Yeni Kayıt Ekle Butonu */}
-      <div className="mb-4 flex justify-end">
+      {/* Yeni Kayıt Ekle ve Toplu JSON Ekle Butonları */}
+      <div className="mb-4 flex justify-end gap-3">
+        <BulkJsonImport 
+          onImport={handleBulkImport}
+          sampleStructure={data.length > 0 ? data[0] : undefined}
+        />
         <button
           onClick={handleOpenCreateModal}
           className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
