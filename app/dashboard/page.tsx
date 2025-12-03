@@ -119,8 +119,6 @@ export default async function DashboardPage() {
       classYear: true,
       language: true,
       hasYearlySynced: true,
-      isPaid: true,
-      lastSyncedAt: true,
       
       courseSubscriptions: {
         include: {
@@ -167,12 +165,12 @@ export default async function DashboardPage() {
                 {/* Right: Status badges */}
                 <div className="flex flex-wrap items-center gap-2">
                   {/* Üyelik Durumu */}
-                  <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold border ${userPreferences?.isPaid ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30' : 'bg-slate-800 text-slate-300 border-slate-700'}`}>
-                    {userPreferences?.isPaid ? 'PRO Üyelik' : 'Ücretsiz Plan'}
+                  <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold border ${(user as any)?.isPaid ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30' : 'bg-slate-800 text-slate-300 border-slate-700'}`}>
+                    {(user as any)?.isPaid ? 'PRO Üyelik' : 'Ücretsiz Plan'}
                   </span>
                   {/* Senkronizasyon Durumu */}
                   <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium bg-slate-800 text-slate-300 border border-slate-700">
-                    Son eşitleme: {userPreferences?.lastSyncedAt ? new Date(userPreferences.lastSyncedAt as unknown as string).toLocaleString('tr-TR') : 'Henüz yok'}
+                    Son eşitleme: {(user as any)?.lastSyncedAt ? new Date((user as any).lastSyncedAt).toLocaleString('tr-TR') : 'Henüz yok'}
                   </span>
                 </div>
               </div>
