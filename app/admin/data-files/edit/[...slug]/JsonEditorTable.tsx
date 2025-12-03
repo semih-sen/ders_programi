@@ -194,11 +194,10 @@ export default function JsonEditorTable({ data, filePath }: JsonEditorTableProps
   const handleBulkImport = async (parsedData: any[]) => {
     setIsSubmitting(true);
     try {
-      // Not: ID'ler artık client-side'da (BulkJsonImport) oluşturuluyor
-      // Server action'a direkt gönderiyoruz (ID çıkarmaya gerek yok)
+      // ID alanlarını çıkar (server tarafında otomatik oluşturulacak)
       const cleanedData = parsedData.map((item) => {
         const { id, ...rest } = item;
-        return rest; // Server'da yeniden UUID oluşturulacak
+        return rest;
       });
 
       const result = await bulkCreateEntries(filePath, cleanedData);

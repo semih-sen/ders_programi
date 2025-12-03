@@ -5,10 +5,12 @@ import { prisma } from '@/lib/prisma';
 import { logActivity } from '@/lib/logger';
 import ActivationForm from './ActivationForm';
 import OnboardingForm from './OnboardingForm';
-import YearlySyncForm from './YearlySyncForm';
 import ResetPreferencesButton from './ResetPreferencesButton';
 import PermissionWarning from './PermissionWarning';
 import DeleteAccountButton from './DeleteAccountButton';
+import SyncCard from './components/SyncCard';
+import DashboardCalendar from './components/Calendar';
+import NextUp from './components/NextUp';
 
 export const metadata = {
   title: 'Dashboard - Sirkadiyen',
@@ -117,6 +119,8 @@ export default async function DashboardPage() {
       classYear: true,
       language: true,
       hasYearlySynced: true,
+      isPaid: true,
+      lastSyncedAt: true,
       
       courseSubscriptions: {
         include: {
@@ -140,20 +144,41 @@ export default async function DashboardPage() {
   const hasCalendarPermission = scope.includes("calendar.events.owned") || scope.includes("calendar");
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 py-8 sm:py-12">
-      <div className="container mx-auto px-4 max-w-6xl">
+    <main className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 py-8 sm:py-12">
+      <div className="container mx-auto px-4 max-w-7xl">
         {/* Takvim İzni Uyarısı */}
         <PermissionWarning hasCalendarPermission={hasCalendarPermission} />
 
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">
-            Hoş Geldiniz, {user.name || 'Kullanıcı'}! 👋
-          </h1>
-          <p className="text-slate-400 text-sm sm:text-base">
-            Hesabınız aktif. Ders programınızı yönetmeye başlayabilirsiniz.
-          </p>
-        </div>
+        {/* Hero Section */}
+        <section className="mb-8 sm:mb-10">
+          <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-gradient-to-br from-indigo-900/50 via-slate-900 to-slate-900">
+            <div className="p-6 sm:p-8">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+                {/* Left: Greeting */}
+                <div className="flex-1">
+                  <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
+                    Hoş geldin, {user.name || 'Kullanıcı'} 👋
+                  </h1>
+                  <p className="mt-2 text-slate-300 text-sm sm:text-base">
+                    {new Date().toLocaleDateString('tr-TR', { weekday: 'long', day: '2-digit', month: 'long' })} • Başarmak için harika bir gün!
+                  </p>
+                </div>
+
+                {/* Right: Status badges */}
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* Üyelik Durumu */}
+                  <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold border ${userPreferences?.isPaid ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30' : 'bg-slate-800 text-slate-300 border-slate-700'}`}>
+                    {userPreferences?.isPaid ? 'PRO Üyelik' : 'Ücretsiz Plan'}
+                  </span>
+                  {/* Senkronizasyon Durumu */}
+                  <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium bg-slate-800 text-slate-300 border border-slate-700">
+                    Son eşitleme: {userPreferences?.lastSyncedAt ? new Date(userPreferences.lastSyncedAt as unknown as string).toLocaleString('tr-TR') : 'Henüz yok'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
@@ -300,46 +325,19 @@ export default async function DashboardPage() {
           )}
         </div>
 
-        {/* Main Content - Calendar Sync */}
-        <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-8 border border-slate-700">
-          <h2 className="text-2xl font-bold text-white mb-6">
-            📅 Google Takvim Senkronizasyonu
-          </h2>
-          
-          <div className="space-y-6">
-            {/* Calendar Sync Section */}
-            <div className="bg-slate-900/50 rounded-lg p-6">
-              <div className="flex items-start gap-4 mb-6">
-                <svg className="w-12 h-12 text-blue-400 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/>
-                </svg>
-                <div className="flex-1">
-                  <p className="text-white font-medium text-lg mb-1">Yıllık Ders Programı Senkronizasyonu</p>
-                  <p className="text-slate-400 text-sm mb-2">
-                    Tüm yıllık ders programınız Google Takvim hesabınıza aktarılacak.
-                  </p>
-                  <p className="text-slate-500 text-xs">
-                    Bağlı hesap: <span className="text-slate-400">{user.email}</span>
-                  </p>
-                </div>
-              </div>
-
-              <div className="border-t border-slate-700 pt-6">
-                <div className="mb-4">
-                  <h4 className="text-sm font-semibold text-slate-300 mb-2">
-                    ⚠️ Önemli Bilgi
-                  </h4>
-                  <ul className="text-slate-400 text-sm space-y-1">
-                    <li>• Bu işlem yalnızca <strong className="text-white">bir kez</strong> yapılabilir</li>
-                    <li>• Tüm seçili dersleriniz takvime eklenecek</li>
-                    <li>• İşlem birkaç dakika sürebilir</li>
-                  </ul>
-                </div>
-
-                <YearlySyncForm hasYearlySynced={userPreferences?.hasYearlySynced || false} />
-              </div>
-            </div>
+        {/* Action Center + NextUp */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          <div className="lg:col-span-2">
+            <SyncCard hasYearlySynced={userPreferences?.hasYearlySynced || false} userEmail={user.email || ''} />
           </div>
+          <div className="lg:col-span-1">
+            <NextUp />
+          </div>
+        </div>
+
+        {/* Embedded Calendar */}
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-2 sm:p-4">
+          <DashboardCalendar />
         </div>
 
         {/* User Info Footer */}

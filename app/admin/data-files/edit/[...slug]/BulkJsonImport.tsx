@@ -1,29 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import Editor from 'react-simple-code-editor';
-import Prism from 'prismjs';
-import 'prismjs/components/prism-json';
-import 'prismjs/themes/prism-tomorrow.css';
 
 interface BulkJsonImportProps {
   onImport: (data: any[]) => void;
   sampleStructure?: Record<string, any>;
 }
-
-// Varsayılan placeholder JSON şeması
-const DEFAULT_PLACEHOLDER = `[
-  {
-    "tarih": "08-09-2025",
-    "grup": "A",
-    "dilim": "KAN LENFOİD 1",
-    "ders": "Fizyoloji",
-    "yer": "Fizyoloji Pratik Salonu",
-    "bilgi": "Konu başlıkları ve detaylar buraya...",
-    "baslangic": "08:30",
-    "bitis": "10:20"
-  }
-]`;
 
 export default function BulkJsonImport({ onImport, sampleStructure }: BulkJsonImportProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -31,9 +13,9 @@ export default function BulkJsonImport({ onImport, sampleStructure }: BulkJsonIm
   const [error, setError] = useState<string | null>(null);
   const [isValidating, setIsValidating] = useState(false);
 
-  // Örnek veri yapısını oluştur (ID olmadan)
+  // Örnek veri yapısını oluştur
   const generateSampleJson = () => {
-    if (!sampleStructure) return DEFAULT_PLACEHOLDER;
+    if (!sampleStructure) return '';
     
     const sample = { ...sampleStructure };
     delete sample.id; // ID'yi örnekten çıkar
@@ -94,18 +76,8 @@ export default function BulkJsonImport({ onImport, sampleStructure }: BulkJsonIm
         throw new Error('JSON dizisindeki tüm öğeler obje olmalıdır.');
       }
 
-      // Otomatik UUID ataması - her objeye benzersiz ID ekle
-      const dataWithIds = parsedData.map((item: any) => {
-        // Eğer id varsa çıkar, yenisi atanacak
-        const { id, ...itemWithoutId } = item;
-        return {
-          ...itemWithoutId,
-          id: crypto.randomUUID(), // Otomatik UUID oluştur
-        };
-      });
-
-      // Başarılı - import işlemini tetikle (UUID'li data ile)
-      onImport(dataWithIds);
+      // Başarılı - import işlemini tetikle
+      onImport(parsedData);
       
       // Modal'ı kapat
       handleCloseModal();
@@ -180,46 +152,23 @@ export default function BulkJsonImport({ onImport, sampleStructure }: BulkJsonIm
                 </div>
               )}
 
-              {/* JSON Input - Code Editor */}
+              {/* JSON Input */}
               <div className="mb-4">
                 <label className="block text-sm font-medium text-slate-300 mb-2">
                   JSON Verisi
-                  <span className="text-slate-500 font-normal ml-2">(Array veya tek obje - ID otomatik atanır)</span>
+                  <span className="text-slate-500 font-normal ml-2">(Array veya tek obje)</span>
                 </label>
-                <div className="border border-slate-700 rounded-lg overflow-hidden bg-slate-900">
-                  <Editor
-                    value={jsonInput}
-                    onValueChange={(code) => {
-                      setJsonInput(code);
-                      setError(null);
-                    }}
-                    highlight={(code) => {
-                      try {
-                        return Prism.highlight(code, Prism.languages.json, 'json');
-                      } catch {
-                        return code;
-                      }
-                    }}
-                    disabled={isValidating}
-                    placeholder={DEFAULT_PLACEHOLDER}
-                    padding={16}
-                    style={{
-                      fontFamily: '"Fira Code", "Fira Mono", monospace',
-                      fontSize: 13,
-                      minHeight: '320px',
-                      maxHeight: '500px',
-                      overflowY: 'auto',
-                      backgroundColor: '#0f172a',
-                      color: '#e2e8f0',
-                      caretColor: '#a78bfa',
-                      lineHeight: '1.6',
-                    }}
-                    textareaClassName="focus:outline-none"
-                  />
-                </div>
-                <p className="text-xs text-slate-500 mt-2">
-                  💡 Syntax highlighting aktif • ID alanlarını yazmayın, otomatik oluşturulur
-                </p>
+                <textarea
+                  value={jsonInput}
+                  onChange={(e) => {
+                    setJsonInput(e.target.value);
+                    setError(null);
+                  }}
+                  disabled={isValidating}
+                  placeholder={`[\n  {\n    "field1": "value1",\n    "field2": "value2"\n  },\n  {\n    "field1": "value3",\n    "field2": "value4"\n  }\n]`}
+                  className="w-full h-80 px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed font-mono text-sm"
+                  spellCheck={false}
+                />
               </div>
 
               {/* Hata Mesajı */}
@@ -242,12 +191,11 @@ export default function BulkJsonImport({ onImport, sampleStructure }: BulkJsonIm
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <div className="text-sm text-blue-300">
-                    <strong className="font-semibold">Kullanım Notları:</strong>
+                    <strong className="font-semibold">Not:</strong>
                     <ul className="list-disc list-inside mt-1 space-y-1 text-blue-300/90">
-                      <li><strong>ID otomatik:</strong> Her kayda benzersiz UUID atanır, id alanı eklemeyin</li>
-                      <li><strong>Format:</strong> Tek obje veya obje dizisi [&#123;...&#125;] girebilirsiniz</li>
-                      <li><strong>Ekleme modu:</strong> Veriler mevcut listeye eklenir (üzerine yazmaz)</li>
-                      <li><strong>Validation:</strong> JSON syntax hataları otomatik tespit edilir</li>
+                      <li>ID alanlarını eklemenize gerek yok, otomatik oluşturulur</li>
+                      <li>Tek obje veya obje dizisi girebilirsiniz</li>
+                      <li>Girilen veriler mevcut listeye eklenecektir (üzerine yazmaz)</li>
                     </ul>
                   </div>
                 </div>
