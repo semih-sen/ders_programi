@@ -23,6 +23,7 @@
     "@prisma/client": "^5.7.0",
     "@types/prismjs": "^1.26.5",
     "amqplib": "^0.10.9",
+    "googleapis": "^167.0.0",
     "lucide-react": "^0.555.0",
     "next": "^14.0.4",
     "next-auth": "^4.24.5",

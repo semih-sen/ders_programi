@@ -2,10 +2,10 @@
 
 import React, { useEffect, useState } from "react";
 import { Calendar, Clock, Coffee } from "lucide-react";
-import type { CalendarEvent } from "@/lib/calendarHelpers";
+import type { GoogleCalendarEvent } from "@/lib/googleCalendarHelper";
 
 interface NextLessonCardProps {
-  events: CalendarEvent[];
+  events: GoogleCalendarEvent[];
 }
 
 export default function NextLessonCard({ events }: NextLessonCardProps) {

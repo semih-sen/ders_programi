@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import dynamic from "next/dynamic";
 import type { EventContentArg } from "@fullcalendar/core";
 import EventModal from "./EventModal";
-import type { CalendarEvent } from "@/lib/calendarHelpers";
+import type { GoogleCalendarEvent } from "@/lib/googleCalendarHelper";
 
 const FullCalendar = dynamic(() => import("@fullcalendar/react"), { ssr: false });
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -12,7 +12,7 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 
 interface ModernCalendarProps {
-  events: CalendarEvent[];
+  events: GoogleCalendarEvent[];
 }
 
 export default function ModernCalendar({ events }: ModernCalendarProps) {

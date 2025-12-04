@@ -3,11 +3,15 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { logActivity } from '@/lib/logger';
-import { getUserScheduleEvents } from '@/lib/calendarHelpers';
+import { getUserCalendarEvents } from '@/lib/googleCalendarHelper';
 import ActivationForm from './ActivationForm';
 import OnboardingForm from './OnboardingForm';
 import PermissionWarning from './PermissionWarning';
-import DashboardClient from './components/DashboardClient';
+import ModernCalendar from './components/Calendar';
+import SyncStatusCard from './components/SyncStatusCard';
+import AccountManagementCard from './components/AccountManagementCard';
+import SubscribedCoursesCard from './components/SubscribedCoursesCard';
+import NextLessonCard from './components/NextUp';
 
 export const metadata = {
   title: 'Dashboard - Sirkadiyen',
@@ -132,34 +136,85 @@ export default async function DashboardPage() {
 
   const subscribedCourses = userPreferences?.courseSubscriptions || [];
   const calendarCourses = subscribedCourses.filter((sub: any) => sub.addToCalendar);
-  const subscribedCourseNames = calendarCourses.map((sub: any) => sub.course.name);
 
   // Takvim izni kontrolü
   const scope = userPreferences?.accounts?.[0]?.scope || "";
   const hasCalendarPermission = scope.includes("calendar.events.owned") || scope.includes("calendar");
 
-  // Fetch schedule events from JSON files
-  const events = await getUserScheduleEvents(
-    userPreferences?.classYear || 1,
-    userPreferences?.uygulamaGrubu,
-    userPreferences?.anatomiGrubu,
-    userPreferences?.yemekhaneEklensin,
-    subscribedCourseNames.length > 0 ? subscribedCourseNames : undefined
-  );
+  // Google Calendar'dan gerçek zamanlı etkinlikleri çek
+  const events = await getUserCalendarEvents();
 
-  const stats = {
-    totalLessons: events.length,
-    subscribedCourses: calendarCourses.length,
-  };
+  // Sync status ve last synced info (eğer schema'da yoksa null)
+  const syncStatus = (user as any).syncStatus || null;
+  const lastSyncedAt = (user as any).lastSyncedAt || null;
 
   return (
-    <>
-      {!hasCalendarPermission && <PermissionWarning hasCalendarPermission={hasCalendarPermission} />}
-      <DashboardClient 
-        events={events} 
-        stats={stats} 
-        hasYearlySynced={userPreferences?.hasYearlySynced || false} 
-      />
-    </>
+    <main className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 py-8">
+      <div className="container mx-auto px-4 max-w-[1800px]">
+        {/* Permission Warning */}
+        {!hasCalendarPermission && <PermissionWarning hasCalendarPermission={hasCalendarPermission} />}
+
+        {/* Hero Section */}
+        <div className="mb-6">
+          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">
+            Hoş geldin, {user.name || 'Kullanıcı'} 👋
+          </h1>
+          <p className="text-slate-400">
+            {new Date().toLocaleDateString('tr-TR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}
+          </p>
+        </div>
+
+        {/* Bento Grid Layout: 3 Columns */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Sol Alan (2 Kolon): Ana Takvim */}
+          <div className="lg:col-span-2 space-y-4">
+            {/* Modern Calendar */}
+            <div className="rounded-2xl border border-slate-800 bg-slate-900/50 backdrop-blur-sm p-4 sm:p-6 shadow-2xl">
+              <ModernCalendar events={events} />
+            </div>
+
+            {/* Next Lesson Card (Desktop'ta altta, mobile'da üstte) */}
+            <div className="lg:hidden">
+              <NextLessonCard events={events} />
+            </div>
+          </div>
+
+          {/* Sağ Sütun (1 Kolon): Kontrol Merkezi */}
+          <div className="space-y-4">
+            {/* 1. Durum Paneli (Senkronizasyon) */}
+            <SyncStatusCard
+              hasYearlySynced={userPreferences?.hasYearlySynced || false}
+              syncStatus={syncStatus}
+              lastSyncedAt={lastSyncedAt}
+            />
+
+            {/* 2. Next Lesson (Sadece Desktop) */}
+            <div className="hidden lg:block">
+              <NextLessonCard events={events} />
+            </div>
+
+            {/* 3. Hesap Yönetimi */}
+            <AccountManagementCard />
+
+            {/* 4. Takip Edilen Dersler Listesi */}
+            <SubscribedCoursesCard
+              courses={subscribedCourses}
+              uygulamaGrubu={userPreferences?.uygulamaGrubu}
+              anatomiGrubu={userPreferences?.anatomiGrubu}
+            />
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="mt-8 flex items-center justify-between text-sm text-slate-400 border-t border-slate-800 pt-4">
+          <div className="flex items-center gap-2">
+            <span>{user.email}</span>
+          </div>
+          <a href="/api/auth/signout" className="text-red-400 hover:text-red-300 transition-colors">
+            Çıkış Yap
+          </a>
+        </div>
+      </div>
+    </main>
   );
 }
