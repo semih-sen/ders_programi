@@ -1,6 +1,7 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
+import { decrypt } from '@/lib/crypto';
 import { google } from 'googleapis';
 
 export interface GoogleCalendarEvent {
@@ -46,6 +47,9 @@ export async function getUserCalendarEvents(): Promise<GoogleCalendarEvent[]> {
       return [];
     }
 
+    // Şifreli refresh token'ı çöz
+    const decryptedRefreshToken = account.refresh_token ? decrypt(account.refresh_token) : null;
+
     // OAuth2 client oluştur
     const oauth2Client = new google.auth.OAuth2(
       process.env.GOOGLE_CLIENT_ID,
@@ -55,7 +59,7 @@ export async function getUserCalendarEvents(): Promise<GoogleCalendarEvent[]> {
 
     oauth2Client.setCredentials({
       access_token: account.access_token,
-      refresh_token: account.refresh_token,
+      refresh_token: decryptedRefreshToken,
     });
 
     // Token yenilenme kontrolü
@@ -142,6 +146,6 @@ function getColorByTitle(title: string): string {
 // Description'dan hoca adını çıkar
 function extractLecturer(description: string): string {
   // "Hoca: Dr. X" gibi pattern'leri ara
-  const match = description.match(/hoca[:\s]+([^\n]+)/i);
+  const match = description.match(/Dr[.\s]+([^\n]+)/i);
   return match ? match[1].trim() : '-';
 }
