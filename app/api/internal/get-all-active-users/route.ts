@@ -33,13 +33,23 @@ export async function GET(request: NextRequest) {
         isActivated: true,
         hasCompletedOnboarding: true
       },
-      include: {
+      select: {
+        id: true,
+        email: true,
+        hasYearlySynced: true,
+        classYear: true,
+        uygulamaGrubu: true,
+        anatomiGrubu: true,
+        secmeliDers: true,
+        yemekhaneEklensin: true,
+        language: true,
+        notificationOffset: true,
+        firstLessonOffset: true,
         accounts: {
           select: {
             refresh_token: true
           }
         },
-        
         courseSubscriptions: {
           include: {
             course: {
@@ -83,6 +93,7 @@ export async function GET(request: NextRequest) {
           decryptedToken: decryptedToken,
           uygulamaGrubu: user.uygulamaGrubu,
           anatomiGrubu: user.anatomiGrubu,
+          secmeliDers: user.secmeliDers,
           yemekhaneEklensin: user.yemekhaneEklensin,
           coursePreferences: coursePreferences,
           language: user.language,

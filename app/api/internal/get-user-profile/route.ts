@@ -39,7 +39,22 @@ export async function POST(request: Request) {
     // 3. Complex Database Query - Fetch User with All Relations
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      include: {
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        image: true,
+        hasCompletedOnboarding: true,
+        classYear: true,
+        language: true,
+        uygulamaGrubu: true,
+        anatomiGrubu: true,
+        secmeliDers: true,
+        yemekhaneEklensin: true,
+        notificationOffset: true,
+        firstLessonOffset: true,
+        createdAt: true,
+        updatedAt: true,
         accounts: {
           select: { refresh_token: true }
         },
@@ -105,6 +120,7 @@ export async function POST(request: Request) {
         language: user.language,
         uygulamaGrubu: user.uygulamaGrubu,
         anatomiGrubu: user.anatomiGrubu,
+        secmeliDers: user.secmeliDers,
         yemekhaneEklensin: user.yemekhaneEklensin,
         notificationOffset: user.notificationOffset,
         firstLessonOffset: user.firstLessonOffset
