@@ -33,6 +33,7 @@ export default function MobileAppsCard() {
             height={53}
             className="h-12 w-auto"
             priority
+            unoptimized
           />
         </Link>
 
