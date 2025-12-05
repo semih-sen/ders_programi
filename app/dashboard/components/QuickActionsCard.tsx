@@ -40,7 +40,7 @@ export default function QuickActionsCard() {
           className="w-full rounded-xl px-4 py-3 bg-slate-800 hover:bg-slate-700/80 border border-slate-700 hover:border-slate-600 text-white font-semibold text-sm transition-colors flex items-center justify-center gap-2"
         >
           <RotateCcw className="w-4 h-4" />
-          Onboarding'i Başlat
+          Kurulumu Başlat
         </button>
 
         {/* Oturumu Kapat */}
