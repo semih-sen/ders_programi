@@ -58,6 +58,7 @@ export default function UserPreferencesForm({ user }: Props) {
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Dönem (Sınıf) */}
         <div>
+          
           <label htmlFor="classYear" className="block text-sm font-medium text-slate-300 mb-1">Dönem (Sınıf)</label>
           <select
             id="classYear"

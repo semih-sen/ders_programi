@@ -313,6 +313,8 @@ const SystemInfoCard = ({ user }: { user: any }) => (
         </span>
       </div>
       
+
+      
       <div className="flex justify-between items-center py-1 border-b border-slate-700/50">
         <span className="text-slate-400">Google Hesabı</span>
         <span className={user.accounts?.length > 0 ? 'text-green-400' : 'text-slate-500'}>
