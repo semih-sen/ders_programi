@@ -10,7 +10,7 @@ export default function AccountManagementCard() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const handleRestartOnboarding = async () => {
-    if (confirm("Onboarding sürecini yeniden başlatmak istediğinize emin misiniz?")) {
+    if (confirm("Kurulum sürecini yeniden başlatmak istediğinize emin misiniz?")) {
       try {
         const res = await fetch("/api/reset-onboarding", { method: "POST" });
         if (res.ok) {
@@ -36,7 +36,7 @@ export default function AccountManagementCard() {
           className="w-full rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 px-4 py-3 text-sm font-medium text-white transition-colors flex items-center gap-2 justify-center"
         >
           <RotateCcw className="w-4 h-4" />
-          Onboarding'i Yeniden Başlat
+          Kurulumu Yeniden Başlat
         </button>
 
         {/* Bilgileri Güncelle */}
