@@ -20,6 +20,18 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'tools.applemediaservices.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'play.google.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 }

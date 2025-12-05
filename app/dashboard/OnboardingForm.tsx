@@ -28,6 +28,7 @@ export default function OnboardingForm({ courses }: OnboardingFormProps) {
   const [anatomiGrubu, setAnatomiGrubu] = useState<string>('');
   const [yemekhaneEklensin, setYemekhaneEklensin] = useState<boolean>(false);
   const [classYear, setClassYear] = useState<string>('');
+  const [secmeliDers, setSecmeliDers] = useState<string>('');
   const [language, setLanguage] = useState<string>('TR');
 
   // Initialize course preferences - all checked by default
@@ -68,6 +69,7 @@ export default function OnboardingForm({ courses }: OnboardingFormProps) {
       anatomiGrubu: anatomiGrubu || undefined,
       yemekhaneEklensin,
       classYear: classYear ? parseInt(classYear) : undefined,
+      secmeliDers: secmeliDers || undefined,
       language: language as 'TR' | 'EN' | undefined,
       coursePreferences,
     };
@@ -192,19 +194,25 @@ export default function OnboardingForm({ courses }: OnboardingFormProps) {
                   </select>
                 </div>
 
-                {/* Language */}
+                {/* Seçmeli Ders Tercihi */}
                 <div>
-                  <label htmlFor="language" className="block text-sm font-semibold text-white mb-3">
-                    Dil Tercihi
+                  <label htmlFor="secmeliDers" className="block text-sm font-semibold text-white mb-3">
+                    Seçmeli Ders Tercihi
                   </label>
                   <select
-                    id="language"
-                    value={language}
-                    onChange={(e) => setLanguage(e.target.value)}
+                    id="secmeliDers"
+                    value={secmeliDers}
+                    onChange={(e) => setSecmeliDers(e.target.value)}
                     className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all hover:bg-slate-700/70"
                   >
-                    <option value="TR">🇹🇷 Türkçe</option>
-                    <option value="EN">🇬🇧 English</option>
+                    <option value="">Seçiniz...</option>
+                    <option value="1">1. Seçmeli</option>
+                    <option value="2">2. Seçmeli</option>
+                    <option value="3">3. Seçmeli</option>
+                    <option value="1-2">1. ve 2. Seçmeli</option>
+                    <option value="1-3">1. ve 3. Seçmeli</option>
+                    <option value="2-3">2. ve 3. Seçmeli</option>
+                    <option value="1-2-3">1., 2. ve 3. Seçmeli</option>
                   </select>
                 </div>
               </div>

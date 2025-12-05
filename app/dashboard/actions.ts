@@ -160,6 +160,7 @@ const OnboardingDataSchema = z.object({
   anatomiGrubu: z.string().optional(),
   yemekhaneEklensin: z.boolean().default(false),
   classYear: z.number().int().positive().optional(),
+  secmeliDers: z.string().optional(),
   language: z.enum(['TR', 'EN']).optional(),
   coursePreferences: z.record(z.string(), CoursePreferenceSchema),
 });
@@ -223,6 +224,7 @@ export async function saveOnboardingPreferences(
           anatomiGrubu: validated.anatomiGrubu,
           yemekhaneEklensin: validated.yemekhaneEklensin,
           classYear: validated.classYear,
+          secmeliDers: validated.secmeliDers,
           language: validated.language,
         },
       });
