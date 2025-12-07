@@ -4,9 +4,10 @@ import path from 'path';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { path: string[] } }
+  context: { params: Promise<{ path: string[] }> }
 ) {
   try {
+    const params = await context.params;
     const filePath = path.join(process.cwd(), 'majlis', 'assets', ...params.path);
     
     // Check if file exists
