@@ -30,8 +30,10 @@ export default function OnboardingSwitch({ userId, initialStatus }: OnboardingSw
     <div className="bg-slate-800/60 border border-slate-700 rounded-xl p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-base font-semibold text-white mb-1">Onboarding Durumu</h3>
+
+          <h3 className="text-base font-semibold text-white mb-1">Kurulum Durumu</h3>
           <p className="text-xs text-slate-400">
+            
             Kullanıcının ilk kurulum adımlarını tamamlama durumu
           </p>
         </div>

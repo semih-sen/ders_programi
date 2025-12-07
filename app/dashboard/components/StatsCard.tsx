@@ -54,7 +54,7 @@ export default function StatsCard({ courseCount, classYear, uygulamaGrubu }: Sta
 
         {!classYear && !uygulamaGrubu && (
           <div className="p-4 rounded-lg bg-slate-800/20 border border-slate-700/20 text-center">
-            <p className="text-slate-500 text-sm">Daha fazla bilgi onboarding'de ayarlanır</p>
+            <p className="text-slate-500 text-sm">Daha fazla bilgi kurulumda ayarlanır</p>
           </div>
         )}
       </div>

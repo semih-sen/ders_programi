@@ -307,11 +307,13 @@ const SystemInfoCard = ({ user }: { user: any }) => (
       </div>
       
       <div className="flex justify-between items-center py-1 border-b border-slate-700/50">
-        <span className="text-slate-400">Onboarding</span>
+        <span className="text-slate-400">Kurulum</span>
         <span className={user.hasCompletedOnboarding ? 'text-green-400' : 'text-slate-500'}>
           {user.hasCompletedOnboarding ? '✓ Tamamlandı' : '✗ Tamamlanmadı'}
         </span>
       </div>
+      
+
       
       <div className="flex justify-between items-center py-1 border-b border-slate-700/50">
         <span className="text-slate-400">Google Hesabı</span>

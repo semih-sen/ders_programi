@@ -54,10 +54,11 @@ export default function UserPreferencesForm({ user }: Props) {
 
   return (
     <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700 mt-6">
-      <h3 className="text-lg font-bold text-white mb-4">Kullanıcı Tercihleri / Onboarding Bilgileri</h3>
+      <h3 className="text-lg font-bold text-white mb-4">Kullanıcı Tercihleri / Kurulum Bilgileri</h3>
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Dönem (Sınıf) */}
         <div>
+          
           <label htmlFor="classYear" className="block text-sm font-medium text-slate-300 mb-1">Dönem (Sınıf)</label>
           <select
             id="classYear"
