@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Majlis - P2P Video Chat</title>
+    <script type="module" crossorigin src="/assets/index-DeWai24A.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-pLXvxeZd.css">
+  </head>
+
+  <body>
+    <!-- Login Overlay -->
+    <div id="loginOverlay" class="login-overlay">
+      <div class="login-box">
+        <h1>🎥 Majlis</h1>
+        <p class="subtitle">Lightweight P2P Video Chat</p>
+        <input 
+          type="text" 
+          id="roomIdInput" 
+          placeholder="Enter Room ID" 
+          autocomplete="off"
+        />
+        <input 
+          type="text" 
+          id="usernameInput" 
+          placeholder="Enter Your Name" 
+          autocomplete="off"
+        />
+        <button id="joinBtn" class="join-btn">Join Room</button>
+      </div>
+    </div>
+
+    <!-- Main Container -->
+    <div id="mainContainer" class="main-container hidden">
+      <!-- Room Info Header -->
+      <div class="room-header">
+        <span class="room-name">Room: <strong id="currentRoomName"></strong></span>
+        <span class="user-status" id="userStatus">Active</span>
+      </div>
+
+      <!-- Video Grid (Remote Peers) -->
+      <div id="videoGrid" class="video-grid">
+        <!-- Remote peer videos will be dynamically added here -->
+      </div>
+
+      <!-- Local Video (Floating & Draggable) -->
+      <div id="localVideoBox" class="local-video-box">
+        <video id="localVideo" autoplay muted playsinline></video>
+        <div class="video-username">You</div>
+      </div>
+
+      <!-- Control Bar -->
+      <div class="control-bar">
+        <button id="toggleMicBtn" class="control-btn" data-active="true">
+          <span class="icon">🎤</span>
+          <span class="label">Mic</span>
+        </button>
+        <button id="toggleCameraBtn" class="control-btn" data-active="true">
+          <span class="icon">📹</span>
+          <span class="label">Camera</span>
+        </button>
+        <button id="shareScreenBtn" class="control-btn">
+          <span class="icon">🖥️</span>
+          <span class="label">Screen</span>
+        </button>
+        <button id="toggleChatBtn" class="control-btn">
+          <span class="icon">💬</span>
+          <span class="label">Chat</span>
+        </button>
+        <button id="leaveBtn" class="control-btn leave-btn">
+          <span class="icon">📞</span>
+          <span class="label">Leave</span>
+        </button>
+      </div>
+
+      <!-- Chat Sidebar -->
+      <div id="chatSidebar" class="chat-sidebar hidden">
+        <div class="chat-header">
+          <h3>💬 Chat</h3>
+          <button id="closeChatBtn" class="close-chat-btn">✕</button>
+        </div>
+        <div id="chatMessages" class="chat-messages">
+          <!-- Messages will be added here dynamically -->
+        </div>
+        <div class="chat-input-area">
+          <input 
+            type="text" 
+            id="chatInput" 
+            placeholder="Type a message..." 
+            autocomplete="off"
+          />
+          <button id="sendMessageBtn" class="send-btn">Send</button>
+        </div>
+      </div>
+    </div>
+
+  </body>
+</html>
