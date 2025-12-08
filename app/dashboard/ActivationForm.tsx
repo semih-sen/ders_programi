@@ -81,7 +81,7 @@ export default function ActivationForm() {
           <p className="text-sm font-medium text-slate-300 text-center">
             Aktivasyon kodunuz yok mu?
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="flex flex-col gap-4">
             {/* Abdullah Ceylan */}
             <a
               href={`https://api.whatsapp.com/send?phone=905510266718&text=${encodeURIComponent(message)}`}
