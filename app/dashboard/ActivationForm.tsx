@@ -2,6 +2,7 @@
 
 import { useFormState, useFormStatus } from "react-dom";
 import { activateAccount, ActivationState } from "./actions";
+import { MessageCircle } from "lucide-react";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -25,6 +26,13 @@ function SubmitButton() {
     </button>
   );
 }
+
+const admins = [
+  { name: "Abdullah Ceylan", phone: "905510266718" },
+  { name: "Semih Şen", phone: "905510566754" }
+];
+
+const message = "Merhaba, Sirkadiyen için aktivasyon kodu alabilir miyim?";
 
 export default function ActivationForm() {
   const initialState: ActivationState = {};
@@ -58,10 +66,41 @@ export default function ActivationForm() {
             pattern="TAK-[A-Z0-9]+"
             maxLength={20}
           />
-          <p className="mt-2 text-xs text-slate-500">Aktivasyon kodunuzu yöneticinizden alabilirsiniz</p>
+          <p className="mt-2 text-xs text-slate-500">Aktivasyon kodunuzu isteyin.</p>
         </div>
 
         <SubmitButton />
+
+        {/* Divider */}
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-slate-600"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-2 bg-slate-800/50 text-slate-400">veya</span>
+          </div>
+        </div>
+
+        {/* WhatsApp Buttons */}
+        <div className="space-y-3">
+          <p className="text-sm font-medium text-slate-300 text-center">
+            Aktivasyon kodunuz yok mu?
+          </p>
+          <div className="grid gap-2">
+            {admins.map((admin) => (
+              <a
+                key={admin.phone}
+                href={`https://wa.me/${admin.phone}?text=${encodeURIComponent(message)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md"
+              >
+                <MessageCircle className="w-5 h-5" />
+                <span>{admin.name}&apos;ten Kodu İste</span>
+              </a>
+            ))}
+          </div>
+        </div>
       </form>
     </div>
   );
