@@ -64,6 +64,7 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
           },
         },
         classYear: true,
+        studentId: true,
       },
     }),
     prisma.user.count({ where: Object.keys(whereClause).length ? whereClause : undefined }),
@@ -141,6 +142,7 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
               <tr>
                 <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-slate-400 uppercase">İsim</th>
                 <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-slate-400 uppercase">Email</th>
+                <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-slate-400 uppercase">Öğrenci No</th>
                 <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-slate-400 uppercase">Rol</th>
                 <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-slate-400 uppercase">Aktif Mi?</th>
                 <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-slate-400 uppercase">Ödeme Durumu</th>
@@ -152,7 +154,7 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
             <tbody className="divide-y divide-slate-700">
               {users.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 sm:px-6 py-12 text-center">
+                  <td colSpan={9} className="px-4 sm:px-6 py-12 text-center">
                     <div className="flex flex-col items-center justify-center">
                       <svg className="w-12 h-12 text-slate-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
@@ -191,6 +193,9 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
                         <Link href={`/admin/users/${user.id}`} className="hover:underline hover:text-blue-300">
                           {user.email}
                         </Link>
+                      </td>
+                      <td className="px-4 sm:px-6 py-3 sm:py-4 text-sm sm:text-base text-slate-400 font-mono">
+                        {user.studentId || '-'}
                       </td>
                       <td className="px-4 sm:px-6 py-3 sm:py-4">
                         <span className={`px-2 sm:px-3 py-1 rounded-full text-xs font-semibold ${

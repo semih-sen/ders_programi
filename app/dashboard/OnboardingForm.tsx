@@ -30,6 +30,7 @@ export default function OnboardingForm({ courses }: OnboardingFormProps) {
   const [classYear, setClassYear] = useState<string>('');
   const [secmeliDers, setSecmeliDers] = useState<string>('');
   const [language, setLanguage] = useState<string>('TR');
+  const [studentId, setStudentId] = useState<string>('');
 
   // Initialize course preferences - all checked by default
   const [coursePreferences, setCoursePreferences] = useState<Record<string, CoursePreference>>(
@@ -71,6 +72,7 @@ export default function OnboardingForm({ courses }: OnboardingFormProps) {
       classYear: classYear ? parseInt(classYear) : undefined,
       secmeliDers: secmeliDers || undefined,
       language: language as 'TR' | 'EN' | undefined,
+      studentId: studentId || undefined,
       coursePreferences,
     };
 
@@ -214,6 +216,29 @@ export default function OnboardingForm({ courses }: OnboardingFormProps) {
                     <option value="2-3">2. ve 3. Seçmeli</option>
                     <option value="1-2-3">1., 2. ve 3. Seçmeli</option>
                   </select>
+                </div>
+
+                {/* Öğrenci Numarası */}
+                <div className="sm:col-span-2">
+                  <label htmlFor="studentId" className="block text-sm font-semibold text-white mb-3">
+                    Öğrenci Numarası
+                  </label>
+                  <input
+                    type="text"
+                    id="studentId"
+                    value={studentId}
+                    onChange={(e) => {
+                      // Sadece rakam girişine izin ver
+                      const value = e.target.value.replace(/\D/g, '');
+                      setStudentId(value);
+                    }}
+                    maxLength={10}
+                    placeholder="Örn: 0101241234"
+                    className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all hover:bg-slate-700/70 font-mono"
+                  />
+                  <p className="text-xs text-slate-400 mt-2">
+                    0101 ile başlayan 10 haneli numaranız. (Opsiyonel)
+                  </p>
                 </div>
               </div>
 

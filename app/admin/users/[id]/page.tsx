@@ -60,6 +60,7 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
       hasCompletedOnboarding: true,
       language: true,
       paymentStatus: true,
+      studentId: true,
       activatedKey: { select: { id: true } },
       accounts: true,
       courseSubscriptions: {
@@ -162,6 +163,7 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
               <li className="flex justify-between"><span className="text-slate-400">Sınıf (Dönem)</span><span className="text-white">{user.classYear ?? '—'}</span></li>
               <li className="flex justify-between"><span className="text-slate-400">Uygulama Grubu</span><span className="text-white">{user.uygulamaGrubu || '—'}</span></li>
               <li className="flex justify-between"><span className="text-slate-400">Anatomi Grubu</span><span className="text-white">{user.anatomiGrubu || '—'}</span></li>
+              <li className="flex justify-between"><span className="text-slate-400">Öğrenci No</span><span className="text-white font-mono text-xs">{user.studentId || '—'}</span></li>
               <li className="flex justify-between"><span className="text-slate-400">Yemekhane</span><span className={user.yemekhaneEklensin ? 'text-green-400' : 'text-slate-500'}>{user.yemekhaneEklensin ? 'Evet' : 'Hayır'}</span></li>
               <li className="flex justify-between"><span className="text-slate-400">Yıllık Eşitleme</span><span className={user.hasYearlySynced ? 'text-green-400' : 'text-slate-500'}>{user.hasYearlySynced ? 'Yapıldı' : 'Yapılmadı'}</span></li>
               <li className="flex justify-between"><span className="text-slate-400">Lisans</span><span className="text-white">{user.activatedKey?.id || '—'}</span></li>

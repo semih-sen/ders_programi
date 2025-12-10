@@ -37,6 +37,7 @@ model User {
   language              Language?
   secmeliDers           String?   // Seçmeli ders tercihi (1, 2, 3, 1-2, 1-3, 2-3 vb.)
   hasYearlySynced       Boolean   @default(false)  // Yıllık senkronizasyon yapıldı mı?
+  studentId             String?   // Öğrenci Numarası (10 haneli, örn: 0101240000)
   
   // Relation to the license key they used
   activatedKey  LicenseKey?

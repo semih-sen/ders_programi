@@ -9,6 +9,7 @@ interface User {
   uygulamaGrubu: string | null;
   anatomiGrubu: string | null;
   yemekhaneEklensin: boolean;
+  studentId: string | null;
 }
 
 interface Props {
@@ -25,6 +26,7 @@ export default function UserPreferencesForm({ user }: Props) {
     uygulamaGrubu: user.uygulamaGrubu ?? '',
     anatomiGrubu: user.anatomiGrubu ?? '',
     yemekhaneEklensin: user.yemekhaneEklensin ?? false,
+    studentId: user.studentId ?? '',
   });
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
@@ -103,6 +105,21 @@ export default function UserPreferencesForm({ user }: Props) {
               <option key={opt} value={opt}>{opt}</option>
             ))}
           </select>
+        </div>
+        {/* Öğrenci Numarası */}
+        <div>
+          <label htmlFor="studentId" className="block text-sm font-medium text-slate-300 mb-1">Öğrenci Numarası</label>
+          <input
+            type="text"
+            id="studentId"
+            name="studentId"
+            value={formState.studentId}
+            onChange={handleChange}
+            maxLength={10}
+            placeholder="Örn: 0101241234"
+            className="w-full px-4 py-2 bg-slate-900 border border-slate-600 rounded-lg text-white focus:outline-none font-mono"
+          />
+          <p className="text-xs text-slate-400 mt-1">10 haneli öğrenci numarası (Sadece rakam)</p>
         </div>
         {/* Yemekhane */}
         <div className="flex items-center">

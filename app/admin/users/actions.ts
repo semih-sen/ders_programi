@@ -775,11 +775,20 @@ export async function updateUserPreferences(userId: string, formData: FormData) 
     const uygulamaGrubu = formData.get('uygulamaGrubu') as string | null;
     const anatomiGrubu = formData.get('anatomiGrubu') as string | null;
     const yemekhaneEklensinRaw = formData.get('yemekhaneEklensin');
+    const studentId = formData.get('studentId') as string | null;
 
     // Dönem (sınıf) int'e çevir
     const classYear = classYearRaw ? parseInt(classYearRaw as string, 10) : null;
     // Checkbox: "on" ise true, yoksa false
     const yemekhaneEklensin = yemekhaneEklensinRaw === 'on';
+
+    // Öğrenci numarası validasyonu
+    if (studentId && studentId.trim()) {
+      const trimmedStudentId = studentId.trim();
+      if (!/^\d{10}$/.test(trimmedStudentId)) {
+        return { error: 'Öğrenci numarası tam olarak 10 haneli rakam olmalıdır.' };
+      }
+    }
 
     await prisma.user.update({
       where: { id: userId },
@@ -788,6 +797,7 @@ export async function updateUserPreferences(userId: string, formData: FormData) 
         uygulamaGrubu: uygulamaGrubu || null,
         anatomiGrubu: anatomiGrubu || null,
         yemekhaneEklensin,
+        studentId: studentId && studentId.trim() ? studentId.trim() : null,
       },
     });
 
