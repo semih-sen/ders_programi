@@ -41,6 +41,7 @@ export async function POST(request: Request) {
       where: { id: userId },
       select: {
         id: true,
+        
         email: true,
         name: true,
         image: true,
@@ -51,6 +52,7 @@ export async function POST(request: Request) {
         anatomiGrubu: true,
         secmeliDers: true,
         yemekhaneEklensin: true,
+        studentId: true,
         notificationOffset: true,
         firstLessonOffset: true,
         createdAt: true,
@@ -122,6 +124,7 @@ export async function POST(request: Request) {
         anatomiGrubu: user.anatomiGrubu,
         secmeliDers: user.secmeliDers,
         yemekhaneEklensin: user.yemekhaneEklensin,
+        studentId: user.studentId,
         notificationOffset: user.notificationOffset,
         firstLessonOffset: user.firstLessonOffset
       },
