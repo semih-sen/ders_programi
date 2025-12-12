@@ -20,8 +20,8 @@ async function getUsers(q?: string) {
       name: true,
       email: true,
       paymentStatus: true,
+      isActivated: true,
       createdAt: true,
-      updatedAt: true,
       accounts: { select: { provider: true, refresh_token: true } },
     },
   });

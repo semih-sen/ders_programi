@@ -9,8 +9,8 @@ type UserRow = {
   name: string | null;
   email: string | null;
   paymentStatus: PaymentStatus;
+  isActivated: boolean;
   createdAt: string | Date;
-  updatedAt: string | Date;
   hasCalendar: boolean;
 };
 
@@ -121,10 +121,12 @@ export default function Client({ users }: { users: UserRow[] }) {
                 {u.paymentStatus === 'UNPAID' && <Badge color="red">UNPAID</Badge>}
               </div>
               <div className="w-24 text-center">
+                {u.isActivated ? <Badge color="green">Onaylı</Badge> : <Badge color="red">Onaysız</Badge>}
+              </div>
+              <div className="w-24 text-center">
                 {u.hasCalendar ? <Badge color="green">Bağlı</Badge> : <Badge color="red">Yok</Badge>}
               </div>
               <div className="w-32 text-xs text-slate-400">{formatDate(new Date(u.createdAt))}</div>
-              <div className="w-32 text-xs text-slate-400">{formatDate(new Date(u.updatedAt))}</div>
             </div>
           ))}
           {filtered.length === 0 && (
