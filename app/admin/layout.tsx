@@ -53,6 +53,9 @@ export default async function AdminLayout({ children }: { children: ReactNode })
                   <MobileNavLink href="/admin/analytics" icon={<ClipboardIcon />}>
                 Analizler
               </MobileNavLink>
+                  <MobileNavLink href="/admin/bulk-events" icon={<ClipboardIcon />}>
+                    Toplu Etkinlik
+                  </MobileNavLink>
                   <MobileNavLink href="/admin/audit" icon={<ClipboardIcon />}>
                     Denetim Kaydı
                   </MobileNavLink>
@@ -105,6 +108,9 @@ export default async function AdminLayout({ children }: { children: ReactNode })
               </NavLink>
               <NavLink href="/admin/analytics" icon={<ClipboardIcon />}>
                 Analizler
+              </NavLink>
+              <NavLink href="/admin/bulk-events" icon={<ClipboardIcon />}>
+                Toplu Etkinlik
               </NavLink>
               <NavLink href="/admin/audit" icon={<ClipboardIcon />}>
                 Denetim Kaydı
