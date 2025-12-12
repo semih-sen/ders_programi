@@ -5,7 +5,6 @@ import { sendBulkCalendarEvent } from './actions';
 type UserRow = {
   id: string;
   name: string | null;
-  surname: string | null;
   email: string | null;
   isPaid: boolean | null;
   createdAt: string | Date;
@@ -61,7 +60,7 @@ export default function Client({ users }: { users: UserRow[] }) {
 
   const filtered = useMemo(() => {
     return users.filter(u => {
-      const s = `${u.name || ''} ${u.surname || ''} ${u.email || ''}`.toLowerCase();
+      const s = `${u.name || ''} ${u.email || ''}`.toLowerCase();
       return s.includes(q.toLowerCase());
     });
   }, [users, q]);
@@ -111,7 +110,7 @@ export default function Client({ users }: { users: UserRow[] }) {
                 onChange={e => toggleOne(u.id, e.target.checked)}
               />
               <div className="flex-1">
-                <div className="text-sm text-white">{u.name} {u.surname}</div>
+                <div className="text-sm text-white">{u.name}</div>
                 <div className="text-xs text-slate-400">{u.email}</div>
               </div>
               <div className="w-24 text-center">

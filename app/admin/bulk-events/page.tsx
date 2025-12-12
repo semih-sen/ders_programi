@@ -18,7 +18,6 @@ async function getUsers(q?: string) {
     select: {
       id: true,
       name: true,
-      surname: true,
       email: true,
       isPaid: true,
       createdAt: true,
