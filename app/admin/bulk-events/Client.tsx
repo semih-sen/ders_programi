@@ -2,11 +2,13 @@
 import { useEffect, useMemo, useState, useTransition } from 'react';
 import { sendBulkCalendarEvent } from './actions';
 
+type PaymentStatus = 'UNPAID' | 'PAID' | 'FREE';
+
 type UserRow = {
   id: string;
   name: string | null;
   email: string | null;
-  isPaid: boolean | null;
+  paymentStatus: PaymentStatus;
   createdAt: string | Date;
   updatedAt: string | Date;
   hasCalendar: boolean;
@@ -114,7 +116,9 @@ export default function Client({ users }: { users: UserRow[] }) {
                 <div className="text-xs text-slate-400">{u.email}</div>
               </div>
               <div className="w-24 text-center">
-                {u.isPaid ? <Badge color="green">PRO</Badge> : <Badge color="gray">FREE</Badge>}
+                {u.paymentStatus === 'PAID' && <Badge color="green">PRO</Badge>}
+                {u.paymentStatus === 'FREE' && <Badge color="gray">FREE</Badge>}
+                {u.paymentStatus === 'UNPAID' && <Badge color="red">UNPAID</Badge>}
               </div>
               <div className="w-24 text-center">
                 {u.hasCalendar ? <Badge color="green">Bağlı</Badge> : <Badge color="red">Yok</Badge>}
