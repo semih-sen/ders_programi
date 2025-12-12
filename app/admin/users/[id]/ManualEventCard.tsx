@@ -1,14 +1,28 @@
 "use client";
-import { useState, useTransition } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { sendManualEvent } from '../actions';
 
 export default function ManualEventCard({ userId }: { userId: string }) {
   const [title, setTitle] = useState('⚠️ Sirkadiyen Deneme Süresi Uyarısı');
   const [description, setDescription] = useState('Deneme süreniz yakında sona eriyor. Lütfen aboneliğinizi yenileyin.');
-  const [date, setDate] = useState<string>('');
+  const [start, setStart] = useState<string>('');
+  const [end, setEnd] = useState<string>('');
   const [colorId, setColorId] = useState<'11' | '5' | '9'>('11');
   const [message, setMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+
+  // Başlangıç seçildiğinde varsayılan bitişi +1 saat ayarla
+  useEffect(() => {
+    if (!start) return;
+    try {
+      const d = new Date(start);
+      const endDate = new Date(d.getTime() + 60 * 60 * 1000);
+      const endStr = new Date(endDate.getTime() - endDate.getTimezoneOffset() * 60000)
+        .toISOString()
+        .slice(0, 16);
+      setEnd(prev => prev ? prev : endStr);
+    } catch {}
+  }, [start]);
 
   return (
     <div className="bg-slate-800/60 border border-slate-700 rounded-xl p-6 flex flex-col">
@@ -17,12 +31,15 @@ export default function ManualEventCard({ userId }: { userId: string }) {
       <form
         onSubmit={e => {
           e.preventDefault();
-          if (!date) {
-            setMessage('Lütfen tarih seçin');
+          if (!start || !end) {
+            setMessage('Lütfen başlangıç ve bitiş zamanı seçin');
             return;
           }
+          // Europe/Istanbul offset (+03:00)
+          const startIso = `${start}:00+03:00`;
+          const endIso = `${end}:00+03:00`;
           startTransition(async () => {
-            const res = await sendManualEvent(userId, { title, description, date, colorId });
+            const res = await sendManualEvent(userId, { title, description, start: startIso, end: endIso, colorId });
             if ('error' in res) setMessage(res.error);
             else setMessage(res.success);
           });
@@ -50,11 +67,20 @@ export default function ManualEventCard({ userId }: { userId: string }) {
         </div>
         <div className="flex gap-3">
           <div className="flex-1">
-            <label className="block text-xs font-medium text-slate-400 mb-1">Tarih</label>
+            <label className="block text-xs font-medium text-slate-400 mb-1">Başlangıç</label>
             <input
-              type="date"
-              value={date}
-              onChange={e => setDate(e.target.value)}
+              type="datetime-local"
+              value={start}
+              onChange={e => setStart(e.target.value)}
+              className="w-full px-3 py-2 text-sm bg-slate-900/60 border border-slate-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+            />
+          </div>
+          <div className="flex-1">
+            <label className="block text-xs font-medium text-slate-400 mb-1">Bitiş</label>
+            <input
+              type="datetime-local"
+              value={end}
+              onChange={e => setEnd(e.target.value)}
               className="w-full px-3 py-2 text-sm bg-slate-900/60 border border-slate-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500/40"
             />
           </div>

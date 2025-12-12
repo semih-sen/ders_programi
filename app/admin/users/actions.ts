@@ -382,15 +382,15 @@ export async function wipeUserCalendar(userId: string) {
  */
 export async function sendManualEvent(
   userId: string,
-  eventData: { title: string; description: string; date: string; colorId: string }
+  eventData: { title: string; description: string; start: string; end?: string; colorId: string }
 ) {
   await checkAdmin();
 
   if (!userId) {
     return { error: 'Kullanıcı ID gerekli.' } as const;
   }
-  if (!eventData?.title || !eventData?.date) {
-    return { error: 'Etkinlik başlığı ve tarihi zorunludur.' } as const;
+  if (!eventData?.title || !eventData?.start) {
+    return { error: 'Etkinlik başlığı ve başlangıç zamanı zorunludur.' } as const;
   }
 
   try {
@@ -428,13 +428,16 @@ export async function sendManualEvent(
     const tokenJson = await tokenRes.json();
     const accessToken = tokenJson.access_token;
 
-    // Etkinlik isteği
+    // Zamanları ISO'ya çevir (datetime-local -> dateTime)
+    const startDate = new Date(eventData.start);
+    const endDate = new Date(eventData.end || new Date(startDate.getTime() + 60 * 60 * 1000));
+
     const eventBody = {
       summary: eventData.title,
       description: eventData.description || '',
-      start: { date: eventData.date }, // Tüm gün etkinlik
-      end: { date: eventData.date },
-      colorId: eventData.colorId || '11', // Varsayılan kırmızı
+      start: { dateTime: startDate.toISOString() },
+      end: { dateTime: endDate.toISOString() },
+      colorId: eventData.colorId || '11',
       transparency: 'transparent',
     };
 
@@ -456,7 +459,7 @@ export async function sendManualEvent(
     // Audit log
     await logAdminAction(
       'MANUAL_EVENT_SENT',
-      `Başlık: ${eventData.title} • Tarih: ${eventData.date}`,
+      `Başlık: ${eventData.title} • Başlangıç: ${startDate.toISOString()}`,
       userId
     );
 
