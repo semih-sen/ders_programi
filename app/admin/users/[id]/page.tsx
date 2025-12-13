@@ -21,6 +21,7 @@ import {
 } from '../actions';
 import ManualEventCard from '@/app/admin/users/[id]/ManualEventCard';
 import CalendarToolsCard from '@/app/admin/users/[id]/CalendarToolsCard';
+import DeleteEventsCard from '@/app/admin/users/[id]/DeleteEventsCard';
 import Image from 'next/image';
 
 interface UserDetailPageProps {
@@ -208,6 +209,8 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
           <CalendarReminderUpdaterCard userId={user.id} />
           {/* Manual Event Form */}
           <ManualEventCard userId={user.id} />
+          {/* Delete Events Card */}
+          <DeleteEventsCard userId={user.id} />
           {/* Calendar Tools (Fetch & Wipe) */}
           <CalendarToolsCard userId={user.id} />
         </div>

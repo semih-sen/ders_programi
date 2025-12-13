@@ -848,3 +848,210 @@ export async function toggleOnboardingStatus(userId: string, currentStatus: bool
     return { error: error.message || 'Durum değiştirilirken hata oluştu.' };
   }
 }
+
+/**
+ * Kullanıcının belirtilen ay ve yıl için takvimindeki etkinlikleri listeler
+ * @param userId - Kullanıcı ID
+ * @param year - Yıl
+ * @param month - Ay (1-12)
+ */
+export async function listUserEvents(userId: string, year: number, month: number) {
+  try {
+    await checkAdmin();
+
+    if (!userId || !year || !month) {
+      return { error: 'Eksik parametre.' };
+    }
+
+    const account = await prisma.account.findFirst({
+      where: { userId, provider: 'google' },
+      select: { refresh_token: true },
+    });
+
+    if (!account?.refresh_token) {
+      return { error: 'Kullanıcının Google hesabı veya refresh token bulunamadı.' };
+    }
+
+    // Refresh token'ı deşifre et
+    const decrypted = decrypt(account.refresh_token);
+    if (!decrypted) {
+      return { error: 'Refresh token deşifre edilemedi.' };
+    }
+
+    // Access token al (saf fetch)
+    const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: process.env.GOOGLE_CLIENT_ID || '',
+        client_secret: process.env.GOOGLE_CLIENT_SECRET || '',
+        refresh_token: decrypted,
+        grant_type: 'refresh_token',
+      }),
+    });
+
+    if (!tokenRes.ok) {
+      const errText = await tokenRes.text();
+      console.error('Token error:', errText);
+      return { error: 'Access token alınamadı.' };
+    }
+
+    const tokenJson = await tokenRes.json();
+    const accessToken = tokenJson.access_token;
+
+    // Ay için başlangıç ve bitiş tarihleri
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59);
+
+    // Google Calendar API'den etkinlikleri çek (KRİTİK: Hiçbir filtre yok!)
+    const calendarUrl = new URL('https://www.googleapis.com/calendar/v3/calendars/primary/events');
+    calendarUrl.searchParams.set('timeMin', startDate.toISOString());
+    calendarUrl.searchParams.set('timeMax', endDate.toISOString());
+    calendarUrl.searchParams.set('singleEvents', 'true');
+    calendarUrl.searchParams.set('orderBy', 'startTime');
+    calendarUrl.searchParams.set('maxResults', '2500');
+
+    const eventsRes = await fetch(calendarUrl.toString(), {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    if (!eventsRes.ok) {
+      const errText = await eventsRes.text();
+      console.error('Calendar events error:', errText);
+      return { error: 'Takvim etkinlikleri alınamadı.' };
+    }
+
+    const eventsData = await eventsRes.json();
+    const allEvents = eventsData.items || [];
+
+    // Etkinlikleri formatlı olarak döndür (KRİTİK: TÜM etkinlikleri getir)
+    const formattedEvents = allEvents.map((event: any) => ({
+      id: event.id,
+      summary: event.summary || '(başlıksız)',
+      start: event.start?.dateTime || event.start?.date || null,
+      end: event.end?.dateTime || event.end?.date || null,
+      description: event.description || '',
+    }));
+
+    return { 
+      success: true, 
+      events: formattedEvents,
+      count: formattedEvents.length,
+    };
+  } catch (error: any) {
+    console.error('listUserEvents error:', error);
+    return { error: error.message || 'Etkinlikler listelenirken hata oluştu.' };
+  }
+}
+
+/**
+ * Kullanıcı takviminden seçilmiş etkinlikleri siler
+ * @param userId - Kullanıcı ID
+ * @param eventIds - Silinecek etkinlik ID'leri
+ */
+export async function deleteSelectedEvents(userId: string, eventIds: string[]) {
+  try {
+    await checkAdmin();
+
+    if (!userId || !eventIds || eventIds.length === 0) {
+      return { error: 'Eksik parametre veya boş etkinlik listesi.' };
+    }
+
+    const account = await prisma.account.findFirst({
+      where: { userId, provider: 'google' },
+      select: { refresh_token: true },
+    });
+
+    if (!account?.refresh_token) {
+      return { error: 'Kullanıcının Google hesabı veya refresh token bulunamadı.' };
+    }
+
+    // Refresh token'ı deşifre et
+    const decrypted = decrypt(account.refresh_token);
+    if (!decrypted) {
+      return { error: 'Refresh token deşifre edilemedi.' };
+    }
+
+    // Access token al
+    const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: process.env.GOOGLE_CLIENT_ID || '',
+        client_secret: process.env.GOOGLE_CLIENT_SECRET || '',
+        refresh_token: decrypted,
+        grant_type: 'refresh_token',
+      }),
+    });
+
+    if (!tokenRes.ok) {
+      const errText = await tokenRes.text();
+      console.error('Token error:', errText);
+      return { error: 'Access token alınamadı.' };
+    }
+
+    const tokenJson = await tokenRes.json();
+    const accessToken = tokenJson.access_token;
+
+    // Promise.allSettled kullanarak tüm etkinlikleri sil
+    const deletePromises = eventIds.map((eventId) =>
+      fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${accessToken}` },
+      })
+        .then((res) => ({
+          eventId,
+          success: res.ok,
+          status: res.status,
+        }))
+        .catch((err) => ({
+          eventId,
+          success: false,
+          error: err.message,
+        }))
+    );
+
+    const results = await Promise.allSettled(deletePromises);
+
+    // Sonuç raporu oluştur
+    let successCount = 0;
+    let failedCount = 0;
+    const failedIds: string[] = [];
+
+    for (const result of results) {
+      if (result.status === 'fulfilled') {
+        if (result.value.success) {
+          successCount++;
+        } else {
+          failedCount++;
+          failedIds.push(result.value.eventId);
+        }
+      } else {
+        failedCount++;
+        if ('eventId' in result.reason) {
+          failedIds.push(result.reason.eventId);
+        }
+      }
+    }
+
+    // Audit log kaydı
+    await logAdminAction(
+      'SELECTED_EVENTS_DELETED',
+      `${successCount} başarılı, ${failedCount} başarısız silme`,
+      userId
+    );
+
+    revalidatePath(`/admin/users/${userId}`);
+
+    return {
+      success: true,
+      successCount,
+      failedCount,
+      failedIds,
+      message: `${successCount} etkinlik silindi${failedCount > 0 ? `, ${failedCount} başarısız` : ''}.`,
+    };
+  } catch (error: any) {
+    console.error('deleteSelectedEvents error:', error);
+    return { error: error.message || 'Etkinlikler silinirken hata oluştu.' };
+  }
+}
