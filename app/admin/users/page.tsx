@@ -4,6 +4,7 @@ import { BanButton, DeleteButton, RoleButton, PaymentStatusButton } from './User
 import SearchInput from './SearchInput';
 import { manuallyActivateUser } from './actions';
 import { redirect } from 'next/navigation';
+import { PeriodTabs } from '../components/PeriodTabs';
 
 export const metadata = {
   title: 'Kullanıcı Yönetimi',
@@ -30,20 +31,24 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
     redirect('/admin/users');
   }
 
-  const whereClause: any = {};
+  const whereAnd: any[] = [];
   if (query) {
-    whereClause.OR = [
-      { name: { contains: query, mode: 'insensitive' } },
-      { email: { contains: query, mode: 'insensitive' } },
-    ];
+    whereAnd.push({
+      OR: [
+        { name: { contains: query, mode: 'insensitive' } },
+        { email: { contains: query, mode: 'insensitive' } },
+      ],
+    });
   }
   if (gradeFilter !== undefined) {
-    whereClause.classYear = gradeFilter;
+    whereAnd.push({ OR: [{ classYear: gradeFilter }, { classYear: null }] });
   }
+
+  const whereClause = whereAnd.length ? { AND: whereAnd } : undefined;
 
   const [users, totalCount] = await Promise.all([
     prisma.user.findMany({
-      where: Object.keys(whereClause).length ? whereClause : undefined,
+      where: whereClause,
       orderBy: { createdAt: 'desc' },
       skip: (currentPage - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
@@ -67,7 +72,7 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
         studentId: true,
       },
     }),
-    prisma.user.count({ where: Object.keys(whereClause).length ? whereClause : undefined }),
+    prisma.user.count({ where: whereClause }),
   ]);
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
@@ -96,25 +101,11 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
       </div>
 
       {/* Dönem (Sınıf) Filtre Sekmeleri */}
-      <div className="mb-6 flex flex-wrap gap-2">
-        {[
-          { label: 'Tümü', value: undefined },
-          { label: 'Dönem 1', value: 1 },
-          { label: 'Dönem 2', value: 2 },
-          { label: 'Dönem 3', value: 3 },
-        ].map(tab => {
-          const active = gradeFilter === tab.value || (tab.value === undefined && gradeFilter === undefined);
-          return (
-            <Link
-              key={tab.label}
-              href={buildUrl({ grade: tab.value, page: 1, query })}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors border ${active ? 'bg-blue-600 text-white border-blue-500' : 'bg-slate-800/60 text-slate-300 border-slate-700 hover:bg-slate-700/60'}`}
-            >
-              {tab.label}
-            </Link>
-          );
-        })}
-      </div>
+      <PeriodTabs
+        activePeriod={gradeFilter}
+        buildHref={(period?: number) => buildUrl({ grade: period, page: 1, query })}
+        className="mb-6"
+      />
 
       {/* Kullanıcı Sayısı & Sayfalama Bilgisi */}
       <div className="mb-4 flex flex-col gap-1">

@@ -12,6 +12,7 @@ type UserRow = {
   isActivated: boolean;
   createdAt: string | Date;
   hasCalendar: boolean;
+  classYear?: number | null;
 };
 
 function Badge({ children, color }: { children: React.ReactNode; color: 'green' | 'gray' | 'red' }) {
@@ -101,6 +102,31 @@ export default function Client({ users }: { users: UserRow[] }) {
               onChange={e => toggleAll(e.target.checked)}
             />
             Tümünü Seç
+          </label>
+          <label className="text-xs text-slate-400 flex items-center gap-2">
+            <input
+              type="checkbox"
+              onChange={e => {
+                if (e.target.checked) {
+                  const unpaidActiveUsers = filtered.filter(u => {
+                    const createdAtDate = new Date(u.createdAt);
+                    const oneWeekAgo = new Date();
+                    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+                    return u.paymentStatus === 'UNPAID' && u.isActivated && createdAtDate <= oneWeekAgo;
+                  }).map(u => u.id);
+                  setSelected(prev => [...new Set([...prev, ...unpaidActiveUsers])]);
+                } else {
+                  const unpaidActiveUsers = filtered.filter(u => {
+                    const createdAtDate = new Date(u.createdAt);
+                    const oneWeekAgo = new Date();
+                    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+                    return u.paymentStatus === 'UNPAID' && u.isActivated && createdAtDate <= oneWeekAgo;
+                  }).map(u => u.id);
+                  setSelected(prev => prev.filter(id => !unpaidActiveUsers.includes(id)));
+                }
+              }}
+            />
+            Ödemeyen Aktif Kullanıcıları Seç
           </label>
         </div>
         <div className="divide-y divide-slate-700">

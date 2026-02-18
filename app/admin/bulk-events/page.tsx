@@ -1,17 +1,18 @@
 import { prisma } from '@/lib/prisma';
 import Client from './Client';
+import { PeriodTabs } from '../components/PeriodTabs';
 
 export const dynamic = 'force-dynamic';
 
-async function getUsers(q?: string) {
-  const where = q
-    ? {
-        OR: [
-          { name: { contains: q, mode: 'insensitive' } },
-          { email: { contains: q, mode: 'insensitive' } },
-        ],
-      }
-    : undefined;
+async function getUsers(gradeFilter?: number) {
+  const whereClauses: any[] = [];
+
+  if (gradeFilter !== undefined) {
+    whereClauses.push({ OR: [{ classYear: gradeFilter }, { classYear: null }] });
+  }
+
+  const where = whereClauses.length ? { AND: whereClauses } : undefined;
+
   const users = await prisma.user.findMany({
     where,
     orderBy: { createdAt: 'desc' },
@@ -22,37 +23,47 @@ async function getUsers(q?: string) {
       paymentStatus: true,
       isActivated: true,
       createdAt: true,
+      classYear: true,
       accounts: { select: { provider: true, refresh_token: true } },
     },
   });
+
   return users.map((u: any) => ({
     ...u,
     hasCalendar: !!u.accounts?.find((a: any) => a.provider === 'google' && a.refresh_token),
   }));
 }
 
-function formatDate(d: Date) {
-  return d.toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' });
-}
+export default async function Page({
+  searchParams,
+}: {
+  searchParams?: {
+    grade?: string;
+  };
+}) {
+  const gradeParam = searchParams?.grade?.trim();
+  const parsedGrade = gradeParam ? parseInt(gradeParam, 10) : undefined;
+  const gradeFilter = Number.isNaN(parsedGrade) ? undefined : parsedGrade;
 
-export default async function Page() {
-  const users = await getUsers();
+  const users = await getUsers(gradeFilter);
+
+  function buildUrl(period?: number) {
+    const sp = new URLSearchParams();
+    if (period !== undefined) sp.set('grade', String(period));
+    const qs = sp.toString();
+    return `/admin/bulk-events${qs ? `?${qs}` : ''}`;
+  }
+
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-xl font-semibold text-white">Toplu Etkinlik Gönderimi</h1>
-      {/* Client wrapper */}
+    <div className="p-6 space-y-4">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-xl font-semibold text-white">Toplu Etkinlik Gönderimi</h1>
+        <PeriodTabs activePeriod={gradeFilter} buildHref={buildUrl} />
+        <p className="text-sm text-slate-400">
+          Seçili sekmeye göre kullanıcı listesi filtrelenir. Dönemsiz kullanıcılar her sekmede görünür.
+        </p>
+      </div>
       <Client users={users} />
     </div>
   );
 }
-
-function Badge({ children, color }: { children: React.ReactNode; color: 'green' | 'gray' | 'red' }) {
-  const map = {
-    green: 'bg-green-600/20 text-green-300 border-green-600/30',
-    gray: 'bg-slate-600/20 text-slate-300 border-slate-600/30',
-    red: 'bg-red-600/20 text-red-300 border-red-600/30',
-  } as const;
-  return <span className={`text-xs border px-2 py-1 rounded ${map[color]}`}>{children}</span>;
-}
-
-// Client component moved to ./Client
