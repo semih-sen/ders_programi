@@ -49,6 +49,7 @@ export default async function AdminDashboard() {
           <QuickLink href="/admin/dining" title="Yemekhane Menüleri" description="Üniversite menülerini yönet" icon="dining" color="yellow" />
           <QuickLink href="/admin/data-files" title="Veri Dosyaları" description="JSON dosyalarını yönet" icon="file" color="cyan" />
           <QuickLink href="/admin/bulk-events" title="Toplu Etkinlik" description="Seçili kullanıcılara takvim etkinliği gönder" icon="audit" color="red" />
+           <QuickLink href="/admin/bulk-delete-events" title="Toplu Etkinlik Silme" description="Sirkadiyen imzalı etkinlikleri topluca sil" icon="audit" color="red" />
           <QuickLink href="/admin/bulk-ban" title="Toplu Ban" description="Seçili kullanıcıları hızlıca banla" icon="audit" color="red" />
           <QuickLink href="/admin/audit" title="Denetim Günlüğü" description="Sistem aktivitelerini görüntüle" icon="audit" color="red" />
         </div>
