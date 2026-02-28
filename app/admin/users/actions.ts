@@ -7,6 +7,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { revalidatePath } from 'next/cache';
 import { randomUUID } from 'crypto';
 import { logAdminAction } from '@/lib/audit';
+import { Prisma } from '@prisma/client';
 
 async function checkAdmin() {
   const session = await getServerSession(authOptions);
@@ -264,6 +265,53 @@ export async function updateAdminNotes(userId: string, notes: string) {
   revalidatePath('/admin/users');
   
   return { success: true };
+}
+
+/**
+ * Admin panelinden kullanıcının ders tercihlerini (takvime ekle / bildirim) günceller.
+ * Mevcut abonelik yoksa oluşturur, varsa günceller.
+ */
+export async function upsertUserCourseSubscription(
+  userId: string,
+  courseId: string,
+  addToCalendar: boolean,
+  notifications: boolean
+) {
+  try {
+    await checkAdmin();
+
+    if (!userId || !courseId) {
+      return { error: 'Kullanıcı ve ders bilgisi gerekli.' } as const;
+    }
+
+    await prisma.userCourseSubscription.upsert({
+      where: { userId_courseId: { userId, courseId } },
+      update: { addToCalendar, notifications },
+      create: { userId, courseId, addToCalendar, notifications },
+    });
+
+    await logAdminAction(
+      'COURSE_PREF_UPDATED',
+      `Ders: ${courseId}, Takvim: ${addToCalendar}, Bildirim: ${notifications}`,
+      userId
+    );
+
+    revalidatePath(`/admin/users/${userId}`);
+    revalidatePath('/admin/users');
+
+    return { success: true } as const;
+  } catch (error: any) {
+    console.error('upsertUserCourseSubscription error:', error);
+
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === 'P2003'
+    ) {
+      return { error: 'Geçersiz ders ID veya kullanıcı bulunamadı.' } as const;
+    }
+
+    return { error: error.message || 'Ders tercihi güncellenemedi.' } as const;
+  }
 }
 
 /**

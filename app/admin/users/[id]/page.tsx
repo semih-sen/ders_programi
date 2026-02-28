@@ -18,6 +18,7 @@ import {
   updateNotificationSettings,
   updateCalendarReminders,
   forceYearlySync,
+  upsertUserCourseSubscription,
 } from '../actions';
 import ManualEventCard from '@/app/admin/users/[id]/ManualEventCard';
 import CalendarToolsCard from '@/app/admin/users/[id]/CalendarToolsCard';
@@ -232,12 +233,13 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
                 <th className="px-4 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">Ders Adı</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">Takvim</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">Bildirim</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">Düzenle</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-700">
               {user.courseSubscriptions.length === 0 ? (
                 <tr>
-                  <td colSpan={3} className="px-4 py-6 text-center text-slate-400 text-sm">Ders aboneliği bulunmuyor.</td>
+                  <td colSpan={4} className="px-4 py-6 text-center text-slate-400 text-sm">Ders aboneliği bulunmuyor.</td>
                 </tr>
               ) : (
                 user.courseSubscriptions.map((sub: any) => (
@@ -245,6 +247,46 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
                     <td className="px-4 py-3 text-sm text-white">{sub.course?.name || '—'}</td>
                     <td className="px-4 py-3 text-sm">{sub.addToCalendar ? <span className="text-green-400">✓</span> : <span className="text-slate-500">✗</span>}</td>
                     <td className="px-4 py-3 text-sm">{sub.notifications ? <span className="text-green-400">✓</span> : <span className="text-slate-500">✗</span>}</td>
+                    <td className="px-4 py-3 text-sm">
+                      <form
+                        action={async (formData: FormData) => {
+                          'use server';
+                          const addToCalendar = (formData.get('addToCalendar') as string) === 'true';
+                          const notifications = (formData.get('notifications') as string) === 'true';
+                          await upsertUserCourseSubscription(user.id, sub.courseId, addToCalendar, notifications);
+                        }}
+                        className="flex items-center gap-2"
+                      >
+                        <label className="sr-only" htmlFor={`calendar-${sub.courseId}`}>Takvim</label>
+                        <select
+                          id={`calendar-${sub.courseId}`}
+                          name="addToCalendar"
+                          defaultValue={sub.addToCalendar ? 'true' : 'false'}
+                          className="bg-slate-900/70 border border-slate-700 text-xs rounded px-2 py-1 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                        >
+                          <option value="true">Takvime Ekle</option>
+                          <option value="false">Ekleme</option>
+                        </select>
+
+                        <label className="sr-only" htmlFor={`notif-${sub.courseId}`}>Bildirim</label>
+                        <select
+                          id={`notif-${sub.courseId}`}
+                          name="notifications"
+                          defaultValue={sub.notifications ? 'true' : 'false'}
+                          className="bg-slate-900/70 border border-slate-700 text-xs rounded px-2 py-1 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+                        >
+                          <option value="true">Bildirim Açık</option>
+                          <option value="false">Bildirim Kapalı</option>
+                        </select>
+
+                        <button
+                          type="submit"
+                          className="px-3 py-1 text-xs font-semibold rounded-md bg-blue-600/20 border border-blue-500/30 text-blue-200 hover:bg-blue-600/30"
+                        >
+                          Kaydet
+                        </button>
+                      </form>
+                    </td>
                   </tr>
                 ))
               )}
